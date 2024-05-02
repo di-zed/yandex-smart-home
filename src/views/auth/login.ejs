@@ -1,0 +1,41 @@
+<%#
+/**
+ * @author DiZed Team
+ * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
+ */
+%>
+<%- include('../layout/header') -%>
+
+<% if (error && error === 'email') { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= __('The email address or password is incorrect. Please try again.') %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<% } %>
+
+<div class="modal-dialog" role="document">
+    <div class="modal-content rounded-4 shadow">
+        <div class="modal-header p-5 pb-4 border-bottom-0">
+            <h1 class="fw-bold mb-0 fs-2"><%= __('Yandex Smart Home') %></h1>
+        </div>
+        <div class="modal-body p-5 pt-0">
+            <form class="" method="post" action="/auth/login">
+                <div class="form-floating mb-3">
+                    <input name="email" type="email" class="form-control rounded-3" id="input-email" placeholder="<%= __('Email Address') %>">
+                    <label for="input-email"><%= __('Email Address') %></label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input name="password" type="password" class="form-control rounded-3" id="input-password" placeholder="<%= __('Password') %>">
+                    <label for="input-password"><%= __('Password') %></label>
+                </div>
+                <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit"><%= __('Sign In') %></button>
+                <small class="text-body-secondary"><%= __('By clicking Sign In, you agree to the terms of use.') %></small>
+                <% Object.keys(params).forEach(key => { %>
+                    <input type="hidden" name="<%= key %>" value="<%= params[key] %>">
+                <% }); %>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../layout/footer') -%>

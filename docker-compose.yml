@@ -1,0 +1,62 @@
+# @author DiZed Team
+# @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
+version: '3'
+
+services:
+
+  node18:
+    container_name: node18-ysh
+    image: node:18.18.0
+    command: npm run start
+    hostname: docker-node18
+    ports:
+      - "80:80"
+      - "443:443"
+      - "3000:3000"
+    volumes:
+      - .:/home/app
+      - ./volumes/etc/ssl:/etc/ssl/docker:cached
+    environment:
+      NODE_ENV: ${NODE_ENV}
+    working_dir: /home/app
+    networks:
+      - internal
+
+  eclipse-mosquitto:
+    container_name: eclipse-mosquitto-ysh
+    image: eclipse-mosquitto:2.0.18
+    hostname: docker-eclipse-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - eclipse_mosquitto_data:/mosquitto/data
+      - ./volumes/etc/mosquitto:/etc/mosquitto
+      - ./volumes/mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./volumes/mosquitto/log:/mosquitto/log
+    networks:
+      - internal
+
+  mqtt-explorer:
+    container_name: mqtt-explorer-ysh
+    image: smeagolworms4/mqtt-explorer:browser-1.0.3
+    hostname: docker-mqtt-explorer
+    ports:
+      - "4000:4000"
+    environment:
+      HTTP_PORT: ${MQTT_EXPLORER_HTTP_PORT}
+      HTTP_USER: ${MQTT_EXPLORER_HTTP_USER}
+      HTTP_PASSWORD: ${MQTT_EXPLORER_HTTP_PASSWORD}
+    depends_on:
+      - eclipse-mosquitto
+    networks:
+      - internal
+
+volumes:
+
+  eclipse_mosquitto_data:
+
+networks:
+
+  internal:
+    driver: bridge

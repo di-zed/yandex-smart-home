@@ -1,0 +1,9 @@
+[
+  {
+    "id": 1,
+    "full_name": "AdminDefault",
+    "email": "admin@ysm.com",
+    "password": "Aadmin!1",
+    "deviceIds": ["thermostat_unique_id"]
+  }
+]

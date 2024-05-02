@@ -1,0 +1,16 @@
+# @author DiZed Team
+# @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
+
+config/devices.json
+config/users.json
+config/mqtt.json
+dist/*
+docker-compose.local.yml
+node_modules/
+volumes/etc/mosquitto/passwd
+volumes/etc/ssl/certs/*
+volumes/etc/ssl/private/*
+volumes/mosquitto/log/*
+.env
+.idea
+!.gitkeep

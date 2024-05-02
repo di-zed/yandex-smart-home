@@ -1,0 +1,8 @@
+# @author DiZed Team
+# @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
+version: '3'
+
+services:
+
+  node18:
+    command: npm run start:dev

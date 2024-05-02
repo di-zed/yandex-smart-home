@@ -1,0 +1,45 @@
+{
+  "subscribeTopic": "#",
+  "topics": [
+    {
+      "deviceType": "devices.types.thermostat",
+      "stateTopic": "<user_name>/climate/<device_id>/state",
+      "configTopic": "<user_name>/climate/<device_id>/config",
+      "availableTopic": "<user_name>/climate/<device_id>/available",
+      "commandTopics": [
+        {
+          "capability": {
+            "type": "devices.capabilities.on_off",
+            "stateInstance": "on"
+          },
+          "topic": "<user_name>/climate/<device_id>/power/set"
+        },
+        {
+          "capability": {
+            "type": "devices.capabilities.range",
+            "stateInstance": "temperature"
+          },
+          "property": {
+            "type": "devices.properties.float",
+            "stateInstance": "temperature"
+          },
+          "topic": "<user_name>/climate/<device_id>/temperature/set"
+        },
+        {
+          "capability": {
+            "type": "devices.capabilities.mode",
+            "stateInstance": "thermostat"
+          },
+          "topic": "<user_name>/climate/<device_id>/thermostat/set"
+        },
+        {
+          "capability": {
+            "type": "devices.capabilities.toggle",
+            "stateInstance": "oscillation"
+          },
+          "topic": "<user_name>/climate/<device_id>/oscillation/set"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "thermostat_unique_id",
+    "name": "Thermostat Name",
+    "description": "Thermostat Description",
+    "room": "Thermostat Room",
+    "type": "devices.types.thermostat",
+    "custom_data": {
+      "custom_key": "Custom Value"
+    },
+    "capabilities": [
+      {
+        "type": "devices.capabilities.on_off",
+        "retrievable": true,
+        "reportable": true,
+        "parameters": {
+          "split": false
+        },
+        "state": {
+          "instance": "on",
+          "value": true
+        }
+      },
+      {
+        "type": "devices.capabilities.range",
+        "retrievable": true,
+        "reportable": true,
+        "parameters": {
+          "instance": "temperature",
+          "unit": "unit.temperature.celsius",
+          "random_access": true,
+          "range": {
+            "min": 0,
+            "max": 40,
+            "precision": 1
+          }
+        },
+        "state": {
+          "instance": "temperature",
+          "value": 30
+        }
+      },
+      {
+        "type": "devices.capabilities.mode",
+        "retrievable": true,
+        "reportable": true,
+        "parameters": {
+          "instance": "thermostat",
+          "modes": [
+            {
+              "value": "auto"
+            },
+            {
+              "value": "cool"
+            },
+            {
+              "value": "dry"
+            },
+            {
+              "value": "eco"
+            },
+            {
+              "value": "fan_only"
+            },
+            {
+              "value": "heat"
+            }
+          ]
+        },
+        "state": {
+          "instance": "thermostat",
+          "value": "auto"
+        }
+      },
+      {
+        "type": "devices.capabilities.toggle",
+        "retrievable": true,
+        "reportable": true,
+        "parameters": {
+          "instance": "oscillation"
+        },
+        "state": {
+          "instance": "oscillation",
+          "value": true
+        }
+      }
+    ],
+    "properties": [
+      {
+        "type": "devices.properties.float",
+        "retrievable": true,
+        "reportable": true,
+        "parameters": {
+          "instance": "temperature",
+          "unit": "unit.temperature.celsius"
+        },
+        "state": {
+          "instance": "temperature",
+          "value": 30
+        }
+      }
+    ],
+    "device_info": {
+      "manufacturer": "Thermostat Manufacturer",
+      "model": "Thermostat Model",
+      "hw_version": "1.0.0",
+      "sw_version": "1.0.0"
+    }
+  }
+]
