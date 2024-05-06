@@ -76,20 +76,15 @@ class MqttRepository {
         topicNames.configTopic = this.handleTopicName(topicData.configTopic, input.user, input.deviceId);
         topicNames.availableTopic = this.handleTopicName(topicData.availableTopic, input.user, input.deviceId);
         topicData.commandTopics.forEach((commandTopicData: MqttCommandTopicInterface): void => {
-          // get by capability data:
-          if (input.capabilityType && input.capabilityStateInstance) {
-            if (
-              commandTopicData.capability?.type === input.capabilityType &&
-              commandTopicData.capability?.stateInstance === input.capabilityStateInstance
-            ) {
-              topicNames.commandTopic = this.handleTopicName(commandTopicData.topic, input.user, input.deviceId);
-            }
-          }
-          // get by property data:
-          if (input.propertyType && input.propertyStateInstance) {
-            if (commandTopicData.property?.type === input.propertyType && commandTopicData.property?.stateInstance === input.propertyStateInstance) {
-              topicNames.commandTopic = this.handleTopicName(commandTopicData.topic, input.user, input.deviceId);
-            }
+          const typeState: MqttTopicTypeState = {
+            capabilityType: input.capabilityType,
+            capabilityStateInstance: input.capabilityStateInstance,
+            propertyType: input.propertyType,
+            propertyStateInstance: input.propertyStateInstance,
+          };
+
+          if (this.matchTopicTypeState(commandTopicData, typeState)) {
+            topicNames.commandTopic = this.handleTopicName(commandTopicData.topic, input.user, input.deviceId);
           }
         });
       }
@@ -102,9 +97,10 @@ class MqttRepository {
    * Get Data from the Topic.
    *
    * @param topic
+   * @param typeState
    * @returns Promise<TopicData | undefined>
    */
-  public async getTopicData(topic: string): Promise<TopicData | undefined> {
+  public async getTopicData(topic: string, typeState?: MqttTopicTypeState): Promise<TopicData | undefined> {
     let result: TopicData | undefined = undefined;
     const configTopics: MqttTopicInterface[] = await this.getConfigTopics();
 
@@ -131,6 +127,10 @@ class MqttRepository {
       item.commandTopics.every((itemCommandTopic: MqttCommandTopicInterface): boolean => {
         const commandTopic: ParsedTopicName | undefined = this.parseTopicName(itemCommandTopic.topic, topic);
         if (commandTopic !== undefined) {
+          if (typeState && !this.matchTopicTypeState(itemCommandTopic, typeState)) {
+            return true;
+          }
+
           result = { ...commandTopic, ...{ topicType: 'commandTopic' } };
           isCommandTopic = true;
           return false;
@@ -149,19 +149,24 @@ class MqttRepository {
    *
    * @param topic
    * @param deviceType
+   * @param typeState
    * @returns Promise<CommandTopicData | undefined>
    */
-  public async getCommandTopicData(topic: string, deviceType: string): Promise<CommandTopicData | undefined> {
+  public async getCommandTopicData(topic: string, deviceType: string, typeState?: MqttTopicTypeState): Promise<CommandTopicData | undefined> {
     let result: CommandTopicData | undefined = undefined;
 
     const configTopics: MqttTopicInterface[] = await this.getConfigTopics();
 
     configTopics.forEach((configTopic: MqttTopicInterface): void => {
       if (configTopic.deviceType === deviceType) {
-        configTopic.commandTopics.forEach((commandTopic: MqttCommandTopicInterface): void => {
+        configTopic.commandTopics.every((commandTopic: MqttCommandTopicInterface): boolean => {
           const parsedTopicName: ParsedTopicName | undefined = this.parseTopicName(commandTopic.topic, topic);
 
           if (parsedTopicName !== undefined) {
+            if (typeState && !this.matchTopicTypeState(commandTopic, typeState)) {
+              return true;
+            }
+
             result = {
               deviceId: parsedTopicName.deviceId,
               deviceType: configTopic.deviceType,
@@ -169,9 +174,12 @@ class MqttRepository {
               capabilityStateInstance: commandTopic.capability?.stateInstance ? commandTopic.capability.stateInstance : '',
               propertyType: commandTopic.property?.type ? commandTopic.property.type : '',
               propertyStateInstance: commandTopic.property?.stateInstance ? commandTopic.property.stateInstance : '',
+              valueMapping: commandTopic?.valueMapping ? commandTopic?.valueMapping : {},
               userName: parsedTopicName.userName,
             };
+            return false;
           }
+          return true;
         });
       }
     });
@@ -264,10 +272,10 @@ class MqttRepository {
    * Prepare Message for the MQTT Topic.
    *
    * @param aliceValue
-   * @param convertData
-   * @returns string
+   * @param topicData
+   * @returns Promise<string>
    */
-  public convertAliceValueToMqttMessage(aliceValue: any, convertData?: MqttConvertData): string {
+  public async convertAliceValueToMqttMessage(aliceValue: any, topicData?: CommandTopicData): Promise<string> {
     let mqttMessage: string;
 
     switch (typeof aliceValue) {
@@ -281,9 +289,13 @@ class MqttRepository {
         mqttMessage = String(aliceValue);
     }
 
+    if (topicData && topicData.valueMapping[mqttMessage] !== undefined) {
+      mqttMessage = topicData.valueMapping[mqttMessage];
+    }
+
     const functionConvertAliceValueToMqttMessage = configProvider.getConfigOption('functionConvertAliceValueToMqttMessage');
     if (typeof functionConvertAliceValueToMqttMessage === 'function') {
-      return functionConvertAliceValueToMqttMessage(aliceValue, mqttMessage, convertData) as string;
+      return (await functionConvertAliceValueToMqttMessage(aliceValue, mqttMessage, topicData)) as string;
     }
 
     return mqttMessage;
@@ -293,11 +305,19 @@ class MqttRepository {
    * Prepare Value for the Alice Device Capability State.
    *
    * @param mqttMessage
-   * @param convertData
-   * @returns any
+   * @param topicData
+   * @returns Promise<any>
    */
-  public convertMqttMessageToAliceValue(mqttMessage: string, convertData?: MqttConvertData): any {
+  public async convertMqttMessageToAliceValue(mqttMessage: string, topicData?: CommandTopicData): Promise<any> {
     let aliceValue: any = undefined;
+
+    if (topicData) {
+      for (const [value, message] of Object.entries(topicData.valueMapping)) {
+        if (message === mqttMessage) {
+          mqttMessage = value;
+        }
+      }
+    }
 
     if (mqttMessage === 'on' || mqttMessage === 'off') {
       aliceValue = mqttMessage === 'on';
@@ -316,23 +336,56 @@ class MqttRepository {
 
     const functionConvertMqttMessageToAliceValue = configProvider.getConfigOption('functionConvertMqttMessageToAliceValue');
     if (typeof functionConvertMqttMessageToAliceValue === 'function') {
-      return functionConvertMqttMessageToAliceValue(mqttMessage, aliceValue, convertData) as string;
+      return (await functionConvertMqttMessageToAliceValue(mqttMessage, aliceValue, topicData)) as string;
     }
 
     return aliceValue;
   }
+
+  /**
+   * Match Type & State Instance.
+   *
+   * @param commandTopic
+   * @param typeState
+   * @returns boolean
+   * @protected
+   */
+  protected matchTopicTypeState(commandTopic: MqttCommandTopicInterface, typeState: MqttTopicTypeState): boolean {
+    if (typeState.capabilityType && typeState.capabilityStateInstance) {
+      if (
+        commandTopic.capability?.type === typeState.capabilityType &&
+        commandTopic.capability?.stateInstance === typeState.capabilityStateInstance
+      ) {
+        return true;
+      }
+    }
+
+    if (typeState.propertyType && typeState.propertyStateInstance) {
+      if (commandTopic.property?.type === typeState.propertyType && commandTopic.property?.stateInstance === typeState.propertyStateInstance) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }
 
 /**
- * MQTT Input Topic Names Type.
+ * MQTT Topic "Type & State Instance" Type.
  */
-export type MqttInputTopicNames = {
-  user: UserInterface;
-  deviceId: string;
+export type MqttTopicTypeState = {
   capabilityType?: string;
   capabilityStateInstance?: string;
   propertyType?: string;
   propertyStateInstance?: string;
+};
+
+/**
+ * MQTT Input Topic Names Type.
+ */
+export type MqttInputTopicNames = MqttTopicTypeState & {
+  user: UserInterface;
+  deviceId: string;
 };
 
 /**
@@ -374,15 +427,7 @@ export type CommandTopicData = ParsedTopicName & {
   capabilityStateInstance: string;
   propertyType: string;
   propertyStateInstance: string;
-};
-
-/**
- * MQTT Convert Data Type.
- */
-export type MqttConvertData = {
-  topic: string;
-  capabilityType: string;
-  capabilityStateInstance: string;
+  valueMapping: { [key: string]: string };
 };
 
 export default new MqttRepository();

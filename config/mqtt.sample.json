@@ -12,7 +12,11 @@
             "type": "devices.capabilities.on_off",
             "stateInstance": "on"
           },
-          "topic": "<user_name>/climate/<device_id>/power/set"
+          "topic": "<user_name>/climate/<device_id>/power/set",
+          "valueMapping": {
+            "on": "enabled",
+            "off": "disabled"
+          }
         },
         {
           "capability": {

@@ -133,11 +133,11 @@ export interface ConfigInterface {
    * @see MqttRepository.convertAliceValueToMqttMessage
    * @example
    * yandexSmartHome(app, {
-   *   functionConvertAliceValueToMqttMessage: function (
+   *   functionConvertAliceValueToMqttMessage: async function (
    *     aliceValue: any,
    *     mqttMessage: string,
-   *     convertData?: MqttConvertData,
-   *   ): string {
+   *     topicData?: CommandTopicData,
+   *   ): Promise<string> {
    *     return '';
    *   },
    * });
@@ -150,11 +150,11 @@ export interface ConfigInterface {
    * @see MqttRepository.convertMqttMessageToAliceValue
    * @example
    * yandexSmartHome(app, {
-   *   functionConvertMqttMessageToAliceValue: function (
+   *   functionConvertMqttMessageToAliceValue: async function (
    *     mqttMessage: string,
    *     aliceValue: any,
-   *     convertData?: MqttConvertData,
-   *   ): any {
+   *     topicData?: CommandTopicData,
+   *   ): Promise<any> {
    *     return ...;
    *   },
    * });

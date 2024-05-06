@@ -69,6 +69,11 @@ export interface MqttCommandTopicInterface {
    * Name of the Command Topic.
    */
   topic: string;
+
+  /**
+   * Value Mapping [System Value => MQTT Value].
+   */
+  valueMapping?: { [key: string]: string };
 }
 
 /**

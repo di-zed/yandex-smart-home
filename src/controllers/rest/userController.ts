@@ -120,13 +120,18 @@ export default class RestUserController {
           capabilityStateInstance: capabilityState.instance,
         });
 
+        let topicData: CommandTopicData | undefined = undefined;
+
         const capabilityMessage: string | undefined = mqttProvider.getTopicMessage(capabilityTopicNames.commandTopic);
+
         if (capabilityMessage !== undefined) {
-          capabilityState.value = mqttRepository.convertMqttMessageToAliceValue(capabilityMessage, {
-            topic: capabilityTopicNames.commandTopic,
-            capabilityType: payloadCapabily.type,
-            capabilityStateInstance: capabilityState.instance,
-          });
+          if (userDevice?.type) {
+            topicData = await mqttRepository.getCommandTopicData(capabilityTopicNames.commandTopic, userDevice.type, {
+              capabilityType: payloadCapabily.type,
+              capabilityStateInstance: capabilityState.instance,
+            });
+          }
+          capabilityState.value = await mqttRepository.convertMqttMessageToAliceValue(capabilityMessage, topicData);
         }
 
         payloadDevice.capabilities.push(<Capability>{
@@ -147,13 +152,17 @@ export default class RestUserController {
           propertyStateInstance: propertyState.instance,
         });
 
+        let topicData: CommandTopicData | undefined = undefined;
+
         const propertyMessage: string | undefined = mqttProvider.getTopicMessage(propertyTopicNames.commandTopic);
         if (propertyMessage !== undefined) {
-          propertyState.value = mqttRepository.convertMqttMessageToAliceValue(propertyMessage, {
-            topic: propertyTopicNames.commandTopic,
-            capabilityType: payloadProperty.type,
-            capabilityStateInstance: propertyState.instance,
-          });
+          if (userDevice?.type) {
+            topicData = await mqttRepository.getCommandTopicData(propertyTopicNames.commandTopic, userDevice.type, {
+              propertyType: payloadProperty.type,
+              propertyStateInstance: propertyState.instance,
+            });
+          }
+          propertyState.value = await mqttRepository.convertMqttMessageToAliceValue(propertyMessage, topicData);
         }
 
         payloadDevice.properties.push(<Property>{
@@ -213,30 +222,23 @@ export default class RestUserController {
         try {
           if (topicNames.commandTopic) {
             let value = capabilityState.value;
+            let topicData: CommandTopicData | undefined = undefined;
 
             const topicMessage: string | undefined = mqttProvider.getTopicMessage(topicNames.commandTopic);
             if (topicMessage !== undefined && userDevice?.type) {
-              const topicData: CommandTopicData | undefined = await mqttRepository.getCommandTopicData(topicNames.commandTopic, userDevice.type);
+              topicData = await mqttRepository.getCommandTopicData(topicNames.commandTopic, userDevice.type, {
+                capabilityType: payloadCapability.type,
+                capabilityStateInstance: capabilityState.instance,
+              });
               if (topicData !== undefined && topicData.capabilityType === 'devices.capabilities.range') {
                 const rangeState: RangeCapabilityState = <RangeCapabilityState>JSON.parse(JSON.stringify(capabilityState));
                 if (rangeState.relative) {
-                  value += mqttRepository.convertMqttMessageToAliceValue(topicMessage, {
-                    topic: topicNames.commandTopic,
-                    capabilityType: topicData.capabilityType,
-                    capabilityStateInstance: topicData.capabilityStateInstance,
-                  });
+                  value += await mqttRepository.convertMqttMessageToAliceValue(topicMessage, topicData);
                 }
               }
             }
 
-            await mqttProvider.publish(
-              topicNames.commandTopic,
-              mqttRepository.convertAliceValueToMqttMessage(value, {
-                topic: topicNames.commandTopic,
-                capabilityType: payloadCapability.type,
-                capabilityStateInstance: capabilityState.instance,
-              }),
-            );
+            await mqttProvider.publish(topicNames.commandTopic, await mqttRepository.convertAliceValueToMqttMessage(value, topicData));
 
             actionResult = { status: 'DONE' };
           }
