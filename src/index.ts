@@ -49,7 +49,7 @@ class YandexSmartHome {
 
     // Lightweight simple translation module with dynamic JSON storage.
     i18n.configure({
-      locales: ['en', 'ru'],
+      locales: ['ru'],
       defaultLocale: 'ru',
       directory: path.join(__dirname, 'locales'),
     });

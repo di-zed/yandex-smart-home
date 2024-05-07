@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.0.2] - 2024-05-07
+
+### Removed
+
+- English locale from the "i18n" configuration.
+
 ## [1.0.1] - 2024-05-06
 
 ### Added

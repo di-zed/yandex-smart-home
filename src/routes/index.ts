@@ -28,7 +28,7 @@ export default class Routes {
 
     // Other URLs.
     app.all('*', (req: Request, res: Response, next: NextFunction) => {
-      next(new AppError(res.__('Can not find %s on this server!', req.originalUrl), 404));
+      next(new AppError(res.__('Can not find "%s" on this server!', req.originalUrl), 404));
     });
 
     app.use(errorHandler);
