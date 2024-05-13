@@ -71,9 +71,9 @@ export interface MqttCommandTopicInterface {
   topic: string;
 
   /**
-   * Value Mapping [System Value => MQTT Value].
+   * Message Value Mapping [MQTT Message => Alice Value].
    */
-  valueMapping?: { [key: string]: string };
+  messageValueMapping?: { [key: string]: any };
 }
 
 /**

@@ -174,7 +174,7 @@ class MqttRepository {
               capabilityStateInstance: commandTopic.capability?.stateInstance ? commandTopic.capability.stateInstance : '',
               propertyType: commandTopic.property?.type ? commandTopic.property.type : '',
               propertyStateInstance: commandTopic.property?.stateInstance ? commandTopic.property.stateInstance : '',
-              valueMapping: commandTopic?.valueMapping ? commandTopic?.valueMapping : {},
+              messageValueMapping: commandTopic?.messageValueMapping ? commandTopic?.messageValueMapping : {},
               userName: parsedTopicName.userName,
             };
             return false;
@@ -276,21 +276,27 @@ class MqttRepository {
    * @returns Promise<string>
    */
   public async convertAliceValueToMqttMessage(aliceValue: any, topicData?: CommandTopicData): Promise<string> {
-    let mqttMessage: string;
+    let mqttMessage: string = '';
 
-    switch (typeof aliceValue) {
-      case 'boolean':
-        mqttMessage = aliceValue ? 'on' : 'off';
-        break;
-      case 'object':
-        mqttMessage = JSON.stringify(aliceValue);
-        break;
-      default:
-        mqttMessage = String(aliceValue);
+    if (topicData) {
+      for (const [message, value] of Object.entries(topicData.messageValueMapping)) {
+        if (value === aliceValue && message !== '__default') {
+          mqttMessage = message;
+        }
+      }
     }
 
-    if (topicData && topicData.valueMapping[mqttMessage] !== undefined) {
-      mqttMessage = topicData.valueMapping[mqttMessage];
+    if (mqttMessage === '') {
+      switch (typeof aliceValue) {
+        case 'boolean':
+          mqttMessage = aliceValue ? 'on' : 'off';
+          break;
+        case 'object':
+          mqttMessage = JSON.stringify(aliceValue);
+          break;
+        default:
+          mqttMessage = String(aliceValue);
+      }
     }
 
     const functionConvertAliceValueToMqttMessage = configProvider.getConfigOption('functionConvertAliceValueToMqttMessage');
@@ -312,25 +318,27 @@ class MqttRepository {
     let aliceValue: any = undefined;
 
     if (topicData) {
-      for (const [value, message] of Object.entries(topicData.valueMapping)) {
-        if (message === mqttMessage) {
-          mqttMessage = value;
-        }
+      if (topicData.messageValueMapping[mqttMessage] !== undefined) {
+        aliceValue = topicData.messageValueMapping[mqttMessage];
+      } else if (topicData.messageValueMapping['__default'] !== undefined) {
+        aliceValue = topicData.messageValueMapping['__default'];
       }
     }
 
-    if (mqttMessage === 'on' || mqttMessage === 'off') {
-      aliceValue = mqttMessage === 'on';
-    } else if (!isNaN(Number(mqttMessage))) {
-      aliceValue = Number(mqttMessage);
-    } else {
-      try {
-        const value = JSON.parse(mqttMessage);
-        if (value && typeof value === 'object') {
-          aliceValue = value;
+    if (aliceValue === undefined) {
+      if (mqttMessage === 'on' || mqttMessage === 'off') {
+        aliceValue = mqttMessage === 'on';
+      } else if (!isNaN(Number(mqttMessage))) {
+        aliceValue = Number(mqttMessage);
+      } else {
+        try {
+          const value = JSON.parse(mqttMessage);
+          if (value && typeof value === 'object') {
+            aliceValue = value;
+          }
+        } catch (err) {
+          aliceValue = mqttMessage.toString();
         }
-      } catch (err) {
-        aliceValue = mqttMessage.toString();
       }
     }
 
@@ -427,7 +435,7 @@ export type CommandTopicData = ParsedTopicName & {
   capabilityStateInstance: string;
   propertyType: string;
   propertyStateInstance: string;
-  valueMapping: { [key: string]: string };
+  messageValueMapping: { [key: string]: any };
 };
 
 export default new MqttRepository();

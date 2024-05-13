@@ -13,9 +13,9 @@
             "stateInstance": "on"
           },
           "topic": "<user_name>/climate/<device_id>/power/set",
-          "valueMapping": {
-            "on": "enabled",
-            "off": "disabled"
+          "messageValueMapping": {
+            "off": false,
+            "__default": true
           }
         },
         {

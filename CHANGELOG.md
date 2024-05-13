@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.0.3] - 2024-05-13
+
+### Changed
+
+- Adjusted ["MQTT Message" => "Alice Value"] config mapping ("valueMapping" changed to "messageValueMapping").
+
 ## [1.0.2] - 2024-05-07
 
 ### Removed
