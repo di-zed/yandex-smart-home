@@ -222,14 +222,17 @@ export default class RestUserController {
         try {
           if (topicNames.commandTopic) {
             let value = capabilityState.value;
-            let topicData: CommandTopicData | undefined = undefined;
 
-            const topicMessage: string | undefined = mqttProvider.getTopicMessage(topicNames.commandTopic);
-            if (topicMessage !== undefined && userDevice?.type) {
+            let topicData: CommandTopicData | undefined = undefined;
+            if (userDevice?.type) {
               topicData = await mqttRepository.getCommandTopicData(topicNames.commandTopic, userDevice.type, {
                 capabilityType: payloadCapability.type,
                 capabilityStateInstance: capabilityState.instance,
               });
+            }
+
+            const topicMessage: string | undefined = mqttProvider.getTopicMessage(topicNames.commandTopic);
+            if (topicMessage !== undefined) {
               if (topicData !== undefined && topicData.capabilityType === 'devices.capabilities.range') {
                 const rangeState: RangeCapabilityState = <RangeCapabilityState>JSON.parse(JSON.stringify(capabilityState));
                 if (rangeState.relative) {

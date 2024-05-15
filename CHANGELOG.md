@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.0.4] - 2024-05-15
+
+### Fixed
+
+- Command Topic Data in the Devices Action (User Controller).
+
 ## [1.0.3] - 2024-05-13
 
 ### Changed
