@@ -7,9 +7,11 @@ config/mqtt.json
 dist/*
 docker-compose.local.yml
 node_modules/
+volumes/etc/mosquitto/certs/*
 volumes/etc/mosquitto/passwd
 volumes/etc/ssl/certs/*
 volumes/etc/ssl/private/*
+volumes/mosquitto/config/mosquitto.conf
 volumes/mosquitto/log/*
 .env
 .idea

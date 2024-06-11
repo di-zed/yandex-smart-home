@@ -2,6 +2,7 @@
  * @author DiZed Team
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
+import fs from 'fs';
 import mqtt from 'mqtt';
 import { IClientPublishOptions, ISubscriptionGrant } from 'mqtt/src/lib/client';
 import { Packet } from 'mqtt-packet';
@@ -48,12 +49,44 @@ export class MqttProvider {
    * @see https://github.com/mqttjs/MQTT.js?tab=readme-ov-file#connect-async
    */
   public async connect(): Promise<mqtt.MqttClient> {
-    return await mqtt.connectAsync(process.env.MQTT_HOST as string, {
-      port: parseInt(process.env.MQTT_PORT as string, 10),
-      username: process.env.MQTT_USERNAME as string,
-      password: process.env.MQTT_PASSWORD as string,
-      clientId: process.env.MQTT_CLIENT_ID as string,
-    });
+    const options: { [key: string]: any } = {};
+
+    const host: string = (process.env.MQTT_HOST as string).trim();
+    const port: number = parseInt(process.env.MQTT_PORT as string, 10);
+    const username: string = (process.env.MQTT_USERNAME as string).trim();
+    const password: string = (process.env.MQTT_PASSWORD as string).trim();
+    const clientId: string = (process.env.MQTT_CLIENT_ID as string).trim();
+    const ca: string = (process.env.MQTT_CA as string).trim();
+    const cert: string = (process.env.MQTT_CERT as string).trim();
+    const key: string = (process.env.MQTT_KEY as string).trim();
+    const rejectUnauthorized: string = (process.env.MQTT_REJECT_UNAUTHORIZED as string).trim();
+
+    if (port) {
+      options.port = port;
+    }
+    if (username) {
+      options.username = username;
+    }
+    if (password) {
+      options.password = password;
+    }
+    if (clientId) {
+      options.clientId = clientId;
+    }
+    if (ca) {
+      options.ca = fs.readFileSync(ca);
+    }
+    if (cert) {
+      options.cert = fs.readFileSync(cert);
+    }
+    if (key) {
+      options.key = fs.readFileSync(key);
+    }
+    if (rejectUnauthorized) {
+      options.rejectUnauthorized = rejectUnauthorized === '1';
+    }
+
+    return await mqtt.connectAsync(host, options);
   }
 
   /**

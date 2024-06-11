@@ -11,6 +11,7 @@ config-prepare:
 
 docker-prepare:
 	cp -vn ./volumes/etc/mosquitto/passwd.sample ./volumes/etc/mosquitto/passwd
+	cp -vn ./volumes/mosquitto/config/mosquitto.conf.sample ./volumes/mosquitto/config/mosquitto.conf
 
 docker-local-prepare:
 	cp -vp ./docker-compose.local.sample.yml ./docker-compose.local.yml

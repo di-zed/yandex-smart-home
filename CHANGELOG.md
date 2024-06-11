@@ -1,5 +1,16 @@
 # CHANGE LOG
 
+## [1.0.5] - 2024-06-11
+
+### Added
+
+- Ability to connect to MQTT using TLS.
+
+### Changed
+
+- Environment variables.
+- mosquitto.conf (added to .gitignore also)
+
 ## [1.0.4] - 2024-05-15
 
 ### Fixed

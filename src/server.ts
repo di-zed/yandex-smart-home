@@ -25,11 +25,11 @@ yandexSmartHome(app, {});
 try {
   let server;
 
-  const sslKey: string = process.env.SSL_KEY as string;
-  const sslCert: string = process.env.SSL_CERT as string;
+  const sslKey: string = process.env.SERVER_SSL_KEY as string;
+  const sslCert: string = process.env.SERVER_SSL_CERT as string;
 
   if (sslKey && sslCert) {
-    const sslPort: number = process.env.SSL_PORT ? parseInt(process.env.SSL_PORT, 10) : 443;
+    const sslPort: number = process.env.SERVER_SSL_PORT ? parseInt(process.env.SERVER_SSL_PORT, 10) : 443;
 
     server = https
       .createServer(

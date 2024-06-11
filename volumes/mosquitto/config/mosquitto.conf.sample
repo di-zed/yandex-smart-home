@@ -1,0 +1,39 @@
+persistence true
+persistence_location /mosquitto/data
+
+log_dest file /mosquitto/log/mosquitto.log
+
+allow_anonymous false
+password_file /etc/mosquitto/passwd
+
+sys_interval 300
+
+include_dir /mosquitto/config/conf.d
+
+listener 1883
+protocol mqtt
+
+# To use the MQTTs protocol we need to provide only 1 certificate (ca.crt)
+# for the client because the "require_certificate" option is false.
+
+#listener 8883
+#cafile /etc/mosquitto/certs/ca.crt
+#certfile /etc/mosquitto/certs/server.crt
+#keyfile /etc/mosquitto/certs/server.key
+#require_certificate false
+#use_identity_as_username false
+
+listener 9001
+protocol websockets
+
+# To use WebSockets we need to provide 3 certificates (ca.crt, client.crt, client.key)
+# for the client because the "require_certificate" option is true.
+# Or set the "require_certificate" option to the false.
+
+#listener 8884
+#protocol websockets
+#cafile /etc/mosquitto/certs/ca.crt
+#certfile /etc/mosquitto/certs/server.crt
+#keyfile /etc/mosquitto/certs/server.key
+#require_certificate true
+#use_identity_as_username false
