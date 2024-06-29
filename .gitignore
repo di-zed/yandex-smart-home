@@ -7,12 +7,15 @@ config/mqtt.json
 dist/*
 docker-compose.local.yml
 node_modules/
+volumes/data/*
 volumes/etc/mosquitto/certs/*
 volumes/etc/mosquitto/passwd
 volumes/etc/ssl/certs/*
 volumes/etc/ssl/private/*
 volumes/mosquitto/config/mosquitto.conf
 volumes/mosquitto/log/*
+volumes/usr/local/etc/redis/redis.conf
+volumes/var/run/*
 .env
 .idea
 !.gitkeep

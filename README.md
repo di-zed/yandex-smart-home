@@ -44,12 +44,14 @@ The essence of the module is that upon command, for example, "Alice, turn on the
      ```code
      chmod 0700 volumes/etc/mosquitto/passwd
      ```
-10. Configure [devices](#implemented_devices_en), [users](#implemented_users_en) and [MQTT topics](#implemented_mqtt_en).
-11. **Launch.** The project is wrapped in Docker. To start, you need to do:
+10. **Redis.** Copy the *./volumes/usr/local/etc/redis/redis.conf.sample* file to the *./volumes/usr/local/etc/redis/redis.conf* file to configure Redis.
+11. **Redis.** Default user password - **123456**. If you need to change, you need to do it in two files at the same time: *.env*, *redis.conf*.
+12. Configure [devices](#implemented_devices_en), [users](#implemented_users_en) and [MQTT topics](#implemented_mqtt_en).
+13. **Launch.** The project is wrapped in Docker. To start, you need to do:
      ```code
      docker-compose stop && docker-compose up -d
      ```
-   If the **.env** file contains the **SERVER_SSL_KEY** and **SERVER_SSL_CERT** parameters, then the module will try to use the **SERVER_SSL_PORT** port, otherwise - **SERVER_PORT** (may be needed for testing and development).
+   If the **.env** file contains the **SERVER_TLS_KEY** and **SERVER_TLS_CERT** parameters, then the module will try to use the **SERVER_TLS_PORT** port, otherwise - **SERVER_PORT** (may be needed for testing and development).
 
 <a name="installed_node_en"><h3>Installing and configuring the module as an auxiliary one.</h3></a>
 
@@ -167,12 +169,14 @@ As an alternative, [special hooks](https://github.com/di-zed/yandex-smart-home/b
     ```code
     chmod 0700 volumes/etc/mosquitto/passwd
     ```
-10. Сконфигурируйте [устройства](#implemented_devices_ru), [пользователей](#implemented_users_ru) и [MQTT-топики](#implemented_mqtt_ru).
-11. **Запуск.** Проект обернут в Docker. Для запуска, необходимо выполнить:
+10. **Redis.** Скопируйте файл *./volumes/usr/local/etc/redis/redis.conf.sample* в файл *./volumes/usr/local/etc/redis/redis.conf* для конфигурации Redis.
+11. **Redis.** Пароль пользователя по умолчанию - **123456**. Изменять нужно в двух файлах одновременно: *.env*, *redis.conf*.
+12. Сконфигурируйте [устройства](#implemented_devices_ru), [пользователей](#implemented_users_ru) и [MQTT-топики](#implemented_mqtt_ru).
+13. **Запуск.** Проект обернут в Docker. Для запуска, необходимо выполнить:
     ```code
     docker-compose stop && docker-compose up -d
     ```
-   Если в файле **.env** указаны параметры **SERVER_SSL_KEY** и **SERVER_SSL_CERT**, то модуль будет пытаться использовать порт **SERVER_SSL_PORT**, в противном случае - **SERVER_PORT** (может понадобиться для тестирования и разработки).
+   Если в файле **.env** указаны параметры **SERVER_TLS_KEY** и **SERVER_TLS_CERT**, то модуль будет пытаться использовать порт **SERVER_TLS_PORT**, в противном случае - **SERVER_PORT** (может понадобиться для тестирования и разработки).
 
 <a name="installed_node_ru"><h3>Установка и настройка модуля, как вспомогательного.</h3></a>
 
@@ -253,7 +257,7 @@ As an alternative, [special hooks](https://github.com/di-zed/yandex-smart-home/b
 ### Node (18.18.0)
 
 - Host: node18
-- Ports: 80, 443, 3000
+- Ports: 3000, 443
 - URL: http://localhost:3000/
 
 ```code
@@ -265,8 +269,7 @@ docker-compose exec node18 /bin/bash
 - Host: eclipse-mosquitto
 - Ports: 1883, 8883, 9001, 8884
 
-### MQTT Explorer (browser-1.0.3)
+### Redis (7.4-rc1-alpine3.20)
 
-- Host: mqtt-explorer
-- Port: 4000
-- URL: http://localhost:4000/
+- Host: redis
+- Port: 6379

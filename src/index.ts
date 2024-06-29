@@ -13,6 +13,7 @@ import morgan from 'morgan';
 import hpp from 'hpp';
 import configProvider from './providers/configProvider';
 import mqttProvider from './providers/mqttProvider';
+import redisProvider from './providers/redisProvider';
 import Routes from './routes';
 import { ConfigInterface } from './interfaces/configInterface';
 
@@ -30,7 +31,7 @@ class YandexSmartHome {
     configProvider.setConfig(config);
 
     this.setConfig(app);
-    this.subscribeMqtt();
+    this.connectRedis();
 
     new Routes(app);
   }
@@ -99,6 +100,18 @@ class YandexSmartHome {
   }
 
   /**
+   * Redis Connection.
+   *
+   * @protected
+   */
+  protected connectRedis(): void {
+    redisProvider.getClient().then((): void => {
+      console.log('Redis connected!');
+      this.subscribeMqtt();
+    });
+  }
+
+  /**
    * MQTT Subscriber.
    *
    * @protected
@@ -127,7 +140,7 @@ class YandexSmartHome {
    * @returns Promise<boolean>
    */
   private async listenTopic(topic: string, message: string): Promise<boolean> {
-    mqttProvider.setTopicMessage(topic, message);
+    await mqttProvider.setTopicMessage(topic, message);
     await mqttProvider.listenTopic(topic, message);
 
     return true;

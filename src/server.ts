@@ -25,22 +25,22 @@ yandexSmartHome(app, {});
 try {
   let server;
 
-  const sslKey: string = process.env.SERVER_SSL_KEY as string;
-  const sslCert: string = process.env.SERVER_SSL_CERT as string;
+  const tlsKey: string = process.env.SERVER_TLS_KEY as string;
+  const tlsCert: string = process.env.SERVER_TLS_CERT as string;
 
-  if (sslKey && sslCert) {
-    const sslPort: number = process.env.SERVER_SSL_PORT ? parseInt(process.env.SERVER_SSL_PORT, 10) : 443;
+  if (tlsKey && tlsCert) {
+    const tlsPort: number = process.env.SERVER_TLS_PORT ? parseInt(process.env.SERVER_TLS_PORT, 10) : 443;
 
     server = https
       .createServer(
         {
-          key: fs.readFileSync(sslKey),
-          cert: fs.readFileSync(sslCert),
+          key: fs.readFileSync(tlsKey),
+          cert: fs.readFileSync(tlsCert),
         },
         app,
       )
-      .listen(sslPort, () => {
-        console.log(`The server is running on port ${sslPort}.`);
+      .listen(tlsPort, () => {
+        console.log(`The server is running on port ${tlsPort}.`);
       });
   } else {
     const port: number = process.env.SERVER_PORT ? parseInt(process.env.SERVER_PORT, 10) : 3000;

@@ -122,7 +122,7 @@ export default class RestUserController {
 
         let topicData: CommandTopicData | undefined = undefined;
 
-        const capabilityMessage: string | undefined = mqttProvider.getTopicMessage(capabilityTopicNames.commandTopic);
+        const capabilityMessage: string | undefined = await mqttProvider.getTopicMessage(capabilityTopicNames.commandTopic);
 
         if (capabilityMessage !== undefined) {
           if (userDevice?.type) {
@@ -154,7 +154,7 @@ export default class RestUserController {
 
         let topicData: CommandTopicData | undefined = undefined;
 
-        const propertyMessage: string | undefined = mqttProvider.getTopicMessage(propertyTopicNames.commandTopic);
+        const propertyMessage: string | undefined = await mqttProvider.getTopicMessage(propertyTopicNames.commandTopic);
         if (propertyMessage !== undefined) {
           if (userDevice?.type) {
             topicData = await mqttRepository.getCommandTopicData(propertyTopicNames.commandTopic, userDevice.type, {
@@ -231,7 +231,7 @@ export default class RestUserController {
               });
             }
 
-            const topicMessage: string | undefined = mqttProvider.getTopicMessage(topicNames.commandTopic);
+            const topicMessage: string | undefined = await mqttProvider.getTopicMessage(topicNames.commandTopic);
             if (topicMessage !== undefined) {
               if (topicData !== undefined && topicData.capabilityType === 'devices.capabilities.range') {
                 const rangeState: RangeCapabilityState = <RangeCapabilityState>JSON.parse(JSON.stringify(capabilityState));

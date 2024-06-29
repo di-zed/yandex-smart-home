@@ -1,5 +1,17 @@
 # CHANGE LOG
 
+## [1.1.0] - 2024-06-29
+
+### Added
+
+- Redis (Remote Dictionary Service).
+
+### Changed
+
+- Cache data now in Redis instead of regular memory.
+- Some variables (.env) have been renamed.
+- Removed MQTT Explorer.
+
 ## [1.0.5] - 2024-06-11
 
 ### Added

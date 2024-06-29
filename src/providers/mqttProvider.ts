@@ -9,6 +9,7 @@ import { Packet } from 'mqtt-packet';
 import { MqttInterface } from '../interfaces/mqttInterface';
 import mqttRepository from '../repositories/mqttRepository';
 import configProvider from './configProvider';
+import redisProvider from './redisProvider';
 
 /**
  * MQTT Provider.
@@ -19,14 +20,7 @@ export class MqttProvider {
    *
    * @protected
    */
-  protected client: mqtt.MqttClient | undefined;
-
-  /**
-   * Cached Topic Messages.
-   *
-   * @protected
-   */
-  protected cacheTopicMessages: CacheTopicMessage = {};
+  protected client: mqtt.MqttClient | undefined = undefined;
 
   /**
    * Get MQTT Client.
@@ -139,10 +133,10 @@ export class MqttProvider {
    *
    * @param topic
    * @param message
-   * @returns boolean
+   * @returns Promise<boolean>
    */
-  public setTopicMessage(topic: string, message: string): boolean {
-    this.cacheTopicMessages[topic] = message;
+  public async setTopicMessage(topic: string, message: string): Promise<boolean> {
+    await redisProvider.setValue(topic, message);
     return true;
   }
 
@@ -150,10 +144,10 @@ export class MqttProvider {
    * Get Topic Message from the Cache.
    *
    * @param topic
-   * @returns string | undefined
+   * @returns Promise<string | undefined>
    */
-  public getTopicMessage(topic: string): string | undefined {
-    return this.cacheTopicMessages[topic];
+  public async getTopicMessage(topic: string): Promise<string | undefined> {
+    return await redisProvider.getValue(topic);
   }
 
   /**

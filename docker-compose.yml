@@ -10,15 +10,17 @@ services:
     command: npm run start
     hostname: docker-node18
     ports:
-      - "80:80"
-      - "443:443"
-      - "3000:3000"
+      - "${SERVER_PORT}:3000"
+      - "${SERVER_TLS_PORT}:443"
     volumes:
       - .:/home/app
       - ./volumes/etc/ssl:/etc/ssl/docker:cached
     environment:
       NODE_ENV: ${NODE_ENV}
     working_dir: /home/app
+    depends_on:
+      - eclipse-mosquitto
+      - redis
     networks:
       - internal
 
@@ -27,31 +29,30 @@ services:
     image: eclipse-mosquitto:2.0.18
     hostname: docker-eclipse-mosquitto
     ports:
-      - "1883:1883" # mqtt
-      - "8883:8883" # mqtts
-      - "9001:9001" # ws
-      - "8884:8884" # wss
+      - "${MQTT_PORT}:1883"
+      - "${MQTT_TLS_PORT}:8883"
+      - "${MQTT_WS_PORT}:9001"
+      - "${MQTT_WSS_PORT}:8884"
     volumes:
       - eclipse_mosquitto_data:/mosquitto/data
       - ./volumes/etc/mosquitto:/etc/mosquitto
       - ./volumes/mosquitto/config/conf.d:/mosquitto/config/conf.d
       - ./volumes/mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - ./volumes/mosquitto/log:/mosquitto/log
+      - ./volumes/mosquitto/log:/mosquitto/log:delegated
     networks:
       - internal
 
-  mqtt-explorer:
-    container_name: mqtt-explorer-ysh
-    image: smeagolworms4/mqtt-explorer:browser-1.0.3
-    hostname: docker-mqtt-explorer
+  redis:
+    container_name: redis-ysh
+    image: redis:7.4-rc1-alpine3.20
+    command: redis-server /usr/local/etc/redis/redis.conf
+    hostname: docker-redis
     ports:
-      - "4000:4000"
-    environment:
-      HTTP_PORT: ${MQTT_EXPLORER_HTTP_PORT}
-      HTTP_USER: ${MQTT_EXPLORER_HTTP_USER}
-      HTTP_PASSWORD: ${MQTT_EXPLORER_HTTP_PASSWORD}
-    depends_on:
-      - eclipse-mosquitto
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ./volumes/data:/data:delegated
+      - ./volumes/usr/local/etc/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./volumes/var/run:/var/run:delegated
     networks:
       - internal
 
