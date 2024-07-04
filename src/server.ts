@@ -29,7 +29,7 @@ try {
   const tlsCert: string = process.env.SERVER_TLS_CERT as string;
 
   if (tlsKey && tlsCert) {
-    const tlsPort: number = process.env.SERVER_TLS_PORT ? parseInt(process.env.SERVER_TLS_PORT, 10) : 443;
+    const tlsPort: number = process.env.SERVER_TLS_CONTAINER_PORT ? parseInt(process.env.SERVER_TLS_CONTAINER_PORT, 10) : 443;
 
     server = https
       .createServer(
@@ -43,7 +43,7 @@ try {
         console.log(`The server is running on port ${tlsPort}.`);
       });
   } else {
-    const port: number = process.env.SERVER_PORT ? parseInt(process.env.SERVER_PORT, 10) : 3000;
+    const port: number = process.env.SERVER_CONTAINER_PORT ? parseInt(process.env.SERVER_CONTAINER_PORT, 10) : 3000;
 
     server = app.listen(port, () => {
       console.log(`The server is running on port ${port}.`);

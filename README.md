@@ -51,7 +51,7 @@ The essence of the module is that upon command, for example, "Alice, turn on the
      ```code
      docker-compose stop && docker-compose up -d
      ```
-   If the **.env** file contains the **SERVER_TLS_KEY** and **SERVER_TLS_CERT** parameters, then the module will try to use the **SERVER_TLS_PORT** port, otherwise - **SERVER_PORT** (may be needed for testing and development).
+   If the **.env** file contains the **SERVER_TLS_KEY** and **SERVER_TLS_CERT** parameters, then the module will try to use the **SERVER_TLS_CONTAINER_PORT** port, otherwise - **SERVER_CONTAINER_PORT** (may be needed for testing and development).
 
 <a name="installed_node_en"><h3>Installing and configuring the module as an auxiliary one.</h3></a>
 
@@ -176,7 +176,7 @@ As an alternative, [special hooks](https://github.com/di-zed/yandex-smart-home/b
     ```code
     docker-compose stop && docker-compose up -d
     ```
-   Если в файле **.env** указаны параметры **SERVER_TLS_KEY** и **SERVER_TLS_CERT**, то модуль будет пытаться использовать порт **SERVER_TLS_PORT**, в противном случае - **SERVER_PORT** (может понадобиться для тестирования и разработки).
+   Если в файле **.env** указаны параметры **SERVER_TLS_KEY** и **SERVER_TLS_CERT**, то модуль будет пытаться использовать порт **SERVER_TLS_CONTAINER_PORT**, в противном случае - **SERVER_CONTAINER_PORT** (может понадобиться для тестирования и разработки).
 
 <a name="installed_node_ru"><h3>Установка и настройка модуля, как вспомогательного.</h3></a>
 

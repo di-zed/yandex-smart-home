@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.1.1] - 2024-07-04
+
+### Changed
+
+- Logic with HOST variables.
+
 ## [1.1.0] - 2024-06-29
 
 ### Added

@@ -37,7 +37,7 @@ export class RedisProvider {
     const username: string = (process.env.REDIS_USERNAME as string).trim();
     const password: string = (process.env.REDIS_PASSWORD as string).trim();
     const host: string = (process.env.REDIS_HOST as string).trim();
-    const port: number = parseInt(process.env.REDIS_PORT as string, 10);
+    const port: number = parseInt(process.env.REDIS_CONTAINER_PORT as string, 10);
     const dbNumber: number = parseInt(process.env.REDIS_DB_NUMBER as string, 10);
     const tls: string = (process.env.REDIS_TLS as string).trim();
     const ca: string = (process.env.REDIS_CA as string).trim();

@@ -46,7 +46,7 @@ export class MqttProvider {
     const options: { [key: string]: any } = {};
 
     const host: string = (process.env.MQTT_HOST as string).trim();
-    const port: number = parseInt(process.env.MQTT_PORT as string, 10);
+    const port: number = parseInt(process.env.MQTT_CONTAINER_PORT as string, 10);
     const username: string = (process.env.MQTT_USERNAME as string).trim();
     const password: string = (process.env.MQTT_PASSWORD as string).trim();
     const clientId: string = (process.env.MQTT_CLIENT_ID as string).trim();
