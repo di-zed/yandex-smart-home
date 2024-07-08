@@ -93,7 +93,12 @@ export class RedisProvider {
    */
   public async getValue(key: string): Promise<any> {
     const client: RedisClientType = await this.getClient();
-    return await client.get(key);
+
+    if (await client.exists(key)) {
+      return await client.get(key);
+    }
+
+    return undefined;
   }
 
   /**

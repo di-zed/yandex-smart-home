@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.1.2] - 2024-07-08
+
+### Fixed
+
+- Get Redis Value logic.
+
 ## [1.1.1] - 2024-07-04
 
 ### Changed
