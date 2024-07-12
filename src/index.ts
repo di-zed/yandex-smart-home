@@ -16,6 +16,7 @@ import mqttProvider from './providers/mqttProvider';
 import redisProvider from './providers/redisProvider';
 import Routes from './routes';
 import { ConfigInterface } from './interfaces/configInterface';
+import { ISubscriptionGrant } from 'mqtt/src/lib/client';
 
 /**
  * Bootstrap Class.
@@ -105,8 +106,7 @@ class YandexSmartHome {
    * @protected
    */
   protected connectRedis(): void {
-    redisProvider.getClient().then((): void => {
-      console.log('Redis connected!');
+    redisProvider.connect().then((): void => {
       this.subscribeMqtt();
     });
   }
@@ -117,33 +117,25 @@ class YandexSmartHome {
    * @protected
    */
   protected subscribeMqtt(): void {
-    mqttProvider.getClient().then(() => {
+    mqttProvider.connect().then((): void => {
       mqttProvider
-        .subscribe(async (topic: string, message: string) => {
+        .subscribe((topic: string, message: string): void => {
           try {
-            await this.listenTopic(topic, message);
+            mqttProvider.setTopicMessage(topic, message).then((): void => {
+              mqttProvider.listenTopic(topic, message);
+            });
           } catch (err) {
             console.log(err, topic, message);
           }
         })
-        .then((result) => {
-          console.log('MQTT subscribed!', result);
+        .then((subscriptionGrants: ISubscriptionGrant[]): void => {
+          const callbackMqttIsSubscribed = configProvider.getConfigOption('callbackMqttIsSubscribed');
+          if (typeof callbackMqttIsSubscribed === 'function') {
+            callbackMqttIsSubscribed(mqttProvider.getClient());
+          }
+          console.log('MQTT is Subscribed!', subscriptionGrants);
         });
     });
-  }
-
-  /**
-   * Listen Topic.
-   *
-   * @param topic
-   * @param message
-   * @returns Promise<boolean>
-   */
-  private async listenTopic(topic: string, message: string): Promise<boolean> {
-    await mqttProvider.setTopicMessage(topic, message);
-    await mqttProvider.listenTopic(topic, message);
-
-    return true;
   }
 }
 

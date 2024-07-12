@@ -1,5 +1,22 @@
 # CHANGE LOG
 
+## [1.2.0] - 2024-07-12
+
+### Added
+
+- Two new callback methods: "callbackRedisIsReady", "callbackMqttIsSubscribed".
+
+### Changed
+
+- Renamed callback "functionRestUserUnlinkAction" to "callbackRestUserUnlinkAction".
+- Renamed callback "functionListenTopic" to "callbackListenTopic".
+- Adjusted Redis Provider. Also removed "getValue" and "setValue" methods.
+- Adjusted MQTT Provider.
+
+### Fixed
+
+- The MQTT Message Callback method is no longer async.
+
 ## [1.1.2] - 2024-07-08
 
 ### Fixed

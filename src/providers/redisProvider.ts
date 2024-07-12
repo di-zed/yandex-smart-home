@@ -4,6 +4,7 @@
  */
 import fs from 'fs';
 import { createClient, RedisClientType } from 'redis';
+import configProvider from './configProvider';
 
 /**
  * Redis Provider.
@@ -18,8 +19,20 @@ export class RedisProvider {
 
   /**
    * Get Redis Client.
+   *
+   * @returns RedisClientType | undefined
    */
-  public async getClient(): Promise<RedisClientType> {
+  public getClient(): RedisClientType | undefined {
+    return this.client;
+  }
+
+  /**
+   * Get Redis Client.
+   * Async method with reconnect possibility.
+   *
+   * @returns Promise<RedisClientType>
+   */
+  public async getClientAsync(): Promise<RedisClientType> {
     if (this.client === undefined) {
       this.client = await this.connect();
     }
@@ -77,41 +90,19 @@ export class RedisProvider {
       socket: socketOptions,
     });
 
-    client.on('error', (err) => console.log(err));
-    // client.on('connect', () => console.log('Redis Connected!'));
-    // client.on('reconnecting', () => console.log('Redis Reconnecting...'));
-    // client.on('ready', () => console.log('Redis Ready!'));
+    client.on('error', (err): void => console.log(err));
+    // client.on('connect', (): void => console.log('Redis Connected!'));
+    // client.on('reconnecting', (): void => console.log('Redis Reconnecting...'));
+    client.on('ready', (): void => {
+      const callbackRedisIsReady = configProvider.getConfigOption('callbackRedisIsReady');
+      if (typeof callbackRedisIsReady === 'function') {
+        callbackRedisIsReady(client);
+      }
+      console.log('Redis is Ready!');
+    });
 
-    return await client.connect();
-  }
-
-  /**
-   * Get value.
-   *
-   * @param key
-   * @returns Promise<any>
-   */
-  public async getValue(key: string): Promise<any> {
-    const client: RedisClientType = await this.getClient();
-
-    if (await client.exists(key)) {
-      return await client.get(key);
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Set value.
-   *
-   * @param key
-   * @param value
-   * @param options
-   * @returns Promise<string | null>
-   */
-  public async setValue(key: string, value: any, options: { [key: string]: any } = {}): Promise<string | null> {
-    const client: RedisClientType = await this.getClient();
-    return await client.set(key, value, options);
+    this.client = await client.connect();
+    return this.client;
   }
 }
 

@@ -232,8 +232,8 @@ export default class AuthController {
    * @protected
    */
   protected async getTokenData(token: string): Promise<TokenData> {
-    return new Promise<TokenData>((resolve, reject) => {
-      jwt.verify(token, process.env.JWT_SECRET as string, {}, (err: jwt.VerifyErrors | null, payload: string | jwt.JwtPayload | undefined) => {
+    return new Promise<TokenData>((resolve, reject): void => {
+      jwt.verify(token, process.env.JWT_SECRET as string, {}, (err: jwt.VerifyErrors | null, payload: string | jwt.JwtPayload | undefined): void => {
         if (err) {
           return reject(err);
         }

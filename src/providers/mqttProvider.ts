@@ -7,6 +7,7 @@ import mqtt from 'mqtt';
 import { IClientPublishOptions, ISubscriptionGrant } from 'mqtt/src/lib/client';
 import { Packet } from 'mqtt-packet';
 import { MqttInterface } from '../interfaces/mqttInterface';
+import { RedisClientType } from 'redis';
 import mqttRepository from '../repositories/mqttRepository';
 import configProvider from './configProvider';
 import redisProvider from './redisProvider';
@@ -25,9 +26,19 @@ export class MqttProvider {
   /**
    * Get MQTT Client.
    *
+   * @returns mqtt.MqttClient | undefined
+   */
+  public getClient(): mqtt.MqttClient | undefined {
+    return this.client;
+  }
+
+  /**
+   * Get MQTT Client.
+   * Async method with reconnect possibility.
+   *
    * @returns Promise<mqtt.MqttClient>
    */
-  public async getClient(): Promise<mqtt.MqttClient> {
+  public async getClientAsync(): Promise<mqtt.MqttClient> {
     if (this.client === undefined) {
       this.client = await this.connect();
     }
@@ -80,24 +91,25 @@ export class MqttProvider {
       options.rejectUnauthorized = rejectUnauthorized === '1';
     }
 
-    return await mqtt.connectAsync(host, options);
+    this.client = await mqtt.connectAsync(host, options);
+    return this.client;
   }
 
   /**
    * Subscribe to a topic or topics.
    *
-   * @param handlerFunction
+   * @param eventMessageCallback
    * @returns Promise<ISubscriptionGrant[]>
    * @see https://github.com/mqttjs/MQTT.js?tab=readme-ov-file#mqttclientsubscribeasynctopictopic-arraytopic-object-options
    */
-  public async subscribe(handlerFunction: Function): Promise<ISubscriptionGrant[]> {
+  public async subscribe(eventMessageCallback: Function): Promise<ISubscriptionGrant[]> {
     const config: MqttInterface = await mqttRepository.getConfig();
 
-    const client: mqtt.MqttClient = await this.getClient();
+    const client: mqtt.MqttClient = await this.getClientAsync();
     const result: Promise<ISubscriptionGrant[]> = client.subscribeAsync(config.subscribeTopic);
 
-    client.on('message', async (topic: string, message: Buffer) => {
-      await handlerFunction(topic as string, String(message) as string);
+    client.on('message', (topic: string, message: Buffer) => {
+      eventMessageCallback(topic as string, String(message) as string);
     });
 
     return result;
@@ -113,7 +125,7 @@ export class MqttProvider {
    * @see https://github.com/mqttjs/MQTT.js?tab=readme-ov-file#mqttclientpublishasynctopic-message-options
    */
   public async publish(topic: string, message: string | Buffer, opts?: IClientPublishOptions): Promise<Packet | undefined> {
-    const client: mqtt.MqttClient = await this.getClient();
+    const client: mqtt.MqttClient = await this.getClientAsync();
     return await client.publishAsync(topic, message, opts);
   }
 
@@ -124,7 +136,7 @@ export class MqttProvider {
    * @see https://github.com/mqttjs/MQTT.js?tab=readme-ov-file#mqttclientendasyncforce-options
    */
   public async end(): Promise<void> {
-    const client: mqtt.MqttClient = await this.getClient();
+    const client: mqtt.MqttClient = await this.getClientAsync();
     return await client.endAsync();
   }
 
@@ -136,8 +148,10 @@ export class MqttProvider {
    * @returns Promise<boolean>
    */
   public async setTopicMessage(topic: string, message: string): Promise<boolean> {
-    await redisProvider.setValue(topic, message);
-    return true;
+    const redisClient: RedisClientType = await redisProvider.getClientAsync();
+    const result: number = await redisClient.hSet('topics', topic, message);
+
+    return result > 0;
   }
 
   /**
@@ -147,7 +161,13 @@ export class MqttProvider {
    * @returns Promise<string | undefined>
    */
   public async getTopicMessage(topic: string): Promise<string | undefined> {
-    return await redisProvider.getValue(topic);
+    const redisClient: RedisClientType = await redisProvider.getClientAsync();
+
+    if (await redisClient.hExists('topics', topic)) {
+      return await redisClient.hGet('topics', topic);
+    }
+
+    return undefined;
   }
 
   /**
@@ -155,19 +175,17 @@ export class MqttProvider {
    *
    * @param topic
    * @param message
-   * @returns Promise<boolean>
+   * @returns void
    */
-  public async listenTopic(topic: string, message: string): Promise<boolean> {
+  public listenTopic(topic: string, message: string): void {
     if (process.env.NODE_ENV === 'development' && process.env.LOG_LISTEN_TOPIC === '1') {
       console.log(topic, '>>', message);
     }
 
-    const functionListenTopic = configProvider.getConfigOption('functionListenTopic');
-    if (typeof functionListenTopic === 'function') {
-      return (await functionListenTopic(topic, message)) as boolean;
+    const callbackListenTopic = configProvider.getConfigOption('callbackListenTopic');
+    if (typeof callbackListenTopic === 'function') {
+      callbackListenTopic(topic, message);
     }
-
-    return true;
   }
 }
 

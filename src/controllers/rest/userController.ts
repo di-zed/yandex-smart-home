@@ -37,9 +37,9 @@ export default class RestUserController {
       ),
     );
 
-    const functionRestUserUnlinkAction = configProvider.getConfigOption('functionRestUserUnlinkAction');
-    if (typeof functionRestUserUnlinkAction === 'function') {
-      await functionRestUserUnlinkAction(req, res);
+    const callbackRestUserUnlinkAction = configProvider.getConfigOption('callbackRestUserUnlinkAction');
+    if (typeof callbackRestUserUnlinkAction === 'function') {
+      await callbackRestUserUnlinkAction(req, res);
     }
 
     return res.status(200).json({

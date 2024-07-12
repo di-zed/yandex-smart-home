@@ -26,9 +26,7 @@ export interface ConfigInterface {
    * @see ClientRepository.getClientById
    * @example
    * yandexSmartHome(app, {
-   *   functionGetClientById: async function (appId: number): Promise<ClientInterface> {
-   *     return new Promise<ClientInterface>((resolve, reject) => { ... });
-   *   },
+   *   functionGetClientById: async function (appId: number): Promise<ClientInterface> { ... },
    * });
    */
   functionGetClientById?: Function;
@@ -39,9 +37,7 @@ export interface ConfigInterface {
    * @see ClientRepository.getClientByClientId
    * @example
    * yandexSmartHome(app, {
-   *   functionGetClientByClientId: async function (clientId: string): Promise<ClientInterface> {
-   *     return new Promise<ClientInterface>((resolve, reject) => { ... });
-   *   },
+   *   functionGetClientByClientId: async function (clientId: string): Promise<ClientInterface> { ... },
    * });
    */
   functionGetClientByClientId?: Function;
@@ -52,9 +48,7 @@ export interface ConfigInterface {
    * @see UserRepository.getUserById
    * @example
    * yandexSmartHome(app, {
-   *   functionGetUserById: async function (userId: number): Promise<UserInterface> {
-   *     return new Promise<UserInterface>((resolve, reject) => { ... });
-   *   },
+   *   functionGetUserById: async function (userId: number): Promise<UserInterface> { ... },
    * });
    */
   functionGetUserById?: Function;
@@ -65,9 +59,7 @@ export interface ConfigInterface {
    * @see UserRepository.getUserByEmailAndPassword
    * @example
    * yandexSmartHome(app, {
-   *   functionGetUserByEmailAndPassword: async function (email: string, password: string): Promise<UserInterface> {
-   *     return new Promise<UserInterface>((resolve, reject) => { ... });
-   *   },
+   *   functionGetUserByEmailAndPassword: async function (email: string, password: string): Promise<UserInterface> { ... },
    * });
    */
   functionGetUserByEmailAndPassword?: Function;
@@ -78,25 +70,10 @@ export interface ConfigInterface {
    * @see UserRepository.getUserByNameOrEmail
    * @example
    * yandexSmartHome(app, {
-   *   functionGetUserByNameOrEmail: async function (nameOrEmail: string): Promise<UserInterface> {
-   *     return new Promise<UserInterface>((resolve, reject) => { ... });
-   *   },
+   *   functionGetUserByNameOrEmail: async function (nameOrEmail: string): Promise<UserInterface> { ... },
    * });
    */
   functionGetUserByNameOrEmail?: Function;
-
-  /**
-   * Additional actions during the notification of unlinked accounts.
-   *
-   * @see RestUserController.unlink
-   * @example
-   * yandexSmartHome(app, {
-   *   functionRestUserUnlinkAction: async function (req: Request, res: Response): Promise<any> {
-   *     return new Promise<any>((resolve, reject) => { ... });
-   *   },
-   * });
-   */
-  functionRestUserUnlinkAction?: Function;
 
   /**
    * The custom function to get the User Devices.
@@ -104,28 +81,10 @@ export interface ConfigInterface {
    * @see DeviceRepository.getUserDevices
    * @example
    * yandexSmartHome(app, {
-   *   functionGetUserDevices: async function (user: UserInterface, configDevices: Device[]): Promise<Device[]> {
-   *     return new Promise<Device[]>((resolve, reject) => { ... });
-   *   },
+   *   functionGetUserDevices: async function (user: UserInterface, configDevices: Device[]): Promise<Device[]> { ... },
    * });
    */
   functionGetUserDevices?: Function;
-
-  /**
-   * The custom function for listening to the topics and handling them if needed.
-   *
-   * @see MqttProvider.listenTopic
-   * @example
-   * yandexSmartHome(app, {
-   *   functionListenTopic: async function (
-   *     topic: string,
-   *     message: string,
-   *   ): Promise<boolean> {
-   *     return true;
-   *   },
-   * });
-   */
-  functionListenTopic?: Function;
 
   /**
    * Adjust the MQTT Message if needed.
@@ -137,9 +96,7 @@ export interface ConfigInterface {
    *     aliceValue: any,
    *     mqttMessage: string,
    *     topicData?: CommandTopicData,
-   *   ): Promise<string> {
-   *     return '';
-   *   },
+   *   ): Promise<string> { ... },
    * });
    */
   functionConvertAliceValueToMqttMessage?: Function;
@@ -154,12 +111,54 @@ export interface ConfigInterface {
    *     mqttMessage: string,
    *     aliceValue: any,
    *     topicData?: CommandTopicData,
-   *   ): Promise<any> {
-   *     return ...;
-   *   },
+   *   ): Promise<any> { ... },
    * });
    */
   functionConvertMqttMessageToAliceValue?: Function;
+
+  /**
+   * Additional actions during the notification of unlinked accounts.
+   *
+   * @see RestUserController.unlink
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackRestUserUnlinkAction: async function (req: Request, res: Response): Promise<void> { ... },
+   * });
+   */
+  callbackRestUserUnlinkAction?: Function;
+
+  /**
+   * A callback method that can be used when Redis is Ready.
+   *
+   * @see RedisProvider.connect
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackRedisIsReady: function (client: RedisClientType): void { ... },
+   * });
+   */
+  callbackRedisIsReady?: Function;
+
+  /**
+   * A callback method that can be used when MQTT Client is Subscribed.
+   *
+   * @see MqttProvider.subscribe
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackMqttIsSubscribed: function (client: mqtt.MqttClient): void { ... },
+   * });
+   */
+  callbackMqttIsSubscribed?: Function;
+
+  /**
+   * The custom callback function for listening to the topics and handling them if needed.
+   *
+   * @see MqttProvider.listenTopic
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackListenTopic: function (topic: string, message: string): void { ... },
+   * });
+   */
+  callbackListenTopic?: Function;
 
   /**
    * The config file with the user list. Each user should have "id", "email", and "password" fields.
