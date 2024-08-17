@@ -24,7 +24,7 @@ class UserRepository {
    * @param userId
    * @returns Promise<UserInterface>
    */
-  public async getUserById(userId: number): Promise<UserInterface> {
+  public async getUserById(userId: string | number): Promise<UserInterface> {
     const functionGetUserById = configProvider.getConfigOption('functionGetUserById');
     if (typeof functionGetUserById === 'function') {
       return (await functionGetUserById(userId)) as UserInterface;
@@ -90,7 +90,7 @@ class UserRepository {
         if (nameOrEmail.search('@') !== -1) {
           return element.email === nameOrEmail;
         }
-        return element.full_name === nameOrEmail;
+        return element.fullName === nameOrEmail;
       });
       if (user) {
         const result: UserInterface = JSON.parse(JSON.stringify(user));

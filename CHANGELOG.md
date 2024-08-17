@@ -1,5 +1,17 @@
 # CHANGE LOG
 
+## [1.2.1] - 2024-08-17
+
+### Changed
+
+- User and Client models.
+- Response error codes.
+
+### Fixed
+
+- The User ID can now be a string.
+- Content Security Policy rules.
+
 ## [1.2.0] - 2024-07-12
 
 ### Added

@@ -73,7 +73,9 @@ class YandexSmartHome {
     // Helmet helps secure Express apps by setting HTTP response headers.
     app.use(
       helmet({
-        contentSecurityPolicy: !(process.env.NODE_ENV === 'development'),
+        contentSecurityPolicy: {
+          directives: { 'script-src': ['cdn.jsdelivr.net'] },
+        },
       }),
     );
 

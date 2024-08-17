@@ -25,7 +25,7 @@ class DeviceRepository {
    * @param userId
    * @returns Promise<Device[]>
    */
-  public async getUserDevices(userId: number): Promise<Device[]> {
+  public async getUserDevices(userId: string | number): Promise<Device[]> {
     const user: UserInterface = await userRepository.getUserById(userId);
     const devices: Device[] = await this.getConfigDevices();
 
@@ -53,7 +53,7 @@ class DeviceRepository {
    * @param deviceId
    * @returns Promise<Device | undefined>
    */
-  public async getUserDeviceById(userId: number, deviceId: string): Promise<Device | undefined> {
+  public async getUserDeviceById(userId: string | number, deviceId: string): Promise<Device | undefined> {
     let result: Device | undefined = undefined;
     const userDevices: Device[] = await this.getUserDevices(userId);
 

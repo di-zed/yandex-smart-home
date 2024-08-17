@@ -267,9 +267,13 @@ docker-compose exec node18 /bin/bash
 ### Eclipse Mosquitto (2.0.18)
 
 - Host: eclipse-mosquitto
-- Ports: 1883, 8883, 9001, 8884
+- Ports: 1883, 9001
 
 ### Redis (7.4-rc1-alpine3.20)
 
 - Host: redis
 - Port: 6379
+
+```code
+docker-compose exec redis redis-cli -h redis -p 6379
+```

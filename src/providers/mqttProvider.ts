@@ -162,12 +162,9 @@ export class MqttProvider {
    */
   public async getTopicMessage(topic: string): Promise<string | undefined> {
     const redisClient: RedisClientType = await redisProvider.getClientAsync();
+    const value: string | undefined | null = await redisClient.hGet('topics', topic);
 
-    if (await redisClient.hExists('topics', topic)) {
-      return await redisClient.hGet('topics', topic);
-    }
-
-    return undefined;
+    return value !== undefined && value !== null ? value : undefined;
   }
 
   /**
@@ -188,12 +185,5 @@ export class MqttProvider {
     }
   }
 }
-
-/**
- * Cache Topic Message type.
- */
-export type CacheTopicMessage = {
-  [key: string]: string;
-};
 
 export default new MqttProvider();

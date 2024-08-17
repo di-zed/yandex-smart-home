@@ -31,16 +31,16 @@ export default class AuthController {
     }
 
     if (!token) {
-      return next(new AppError(res.__('You are not logged in! Please log in to get access.'), 500));
+      return next(new AppError(res.__('You are not logged in! Please log in to get access.'), 401));
     }
 
-    const tokenData: TokenData = await this.getTokenData(token);
-
     try {
+      const tokenData: TokenData = await this.getTokenData(token);
+
       req.currentClient = await clientRepository.getClientById(tokenData.appId);
       req.currentUser = await userRepository.getUserById(tokenData.userId);
     } catch (err) {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('You are not logged in! Please log in to get access.'), 401));
     }
 
     return next();
@@ -59,13 +59,13 @@ export default class AuthController {
   public login = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const authParams: AuthParams = this.getAuthParams(req.query);
     if (!this.isAuthRequestValid(authParams)) {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('Invalid input data.'), 400));
     }
 
     try {
       await clientRepository.getClientByClientId(authParams.client_id);
     } catch (err) {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('This client does not exist.'), 404));
     }
 
     const viewAuthLogin = configProvider.getConfigOption('viewAuthLogin');
@@ -90,7 +90,7 @@ export default class AuthController {
   public loginPost = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const authParams: AuthParams = this.getAuthParams(req.body);
     if (!this.isAuthRequestValid(authParams)) {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('Invalid input data.'), 400));
     }
 
     const { email, password } = req.body;
@@ -106,7 +106,7 @@ export default class AuthController {
     try {
       client = await clientRepository.getClientByClientId(authParams.client_id);
     } catch (err) {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('This client does not exist.'), 404));
     }
 
     try {
@@ -143,12 +143,11 @@ export default class AuthController {
   public token = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     const code: string = req.body.code as string;
     if (!code) {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('The parameter "%s" is required.', 'code'), 400));
     }
 
-    const codeData: TokenData = await this.getTokenData(code);
-
     try {
+      const codeData: TokenData = await this.getTokenData(code);
       const client: ClientInterface = await clientRepository.getClientById(codeData.appId);
       const user: UserInterface = await userRepository.getUserById(codeData.userId);
 
@@ -214,7 +213,7 @@ export default class AuthController {
    * @returns string
    * @protected
    */
-  protected getToken(appId: number, userId: number, expiresIn: string): string {
+  protected getToken(appId: number, userId: string | number, expiresIn: string): string {
     const tokenData: TokenData = {
       appId: appId,
       userId: userId,
@@ -289,5 +288,5 @@ type TokenData = {
   /**
    * User ID.
    */
-  userId: number;
+  userId: string | number;
 };

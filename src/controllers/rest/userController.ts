@@ -90,7 +90,7 @@ export default class RestUserController {
    */
   public devicesQuery = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     if (typeof req.body.devices !== 'object') {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('The parameter "%s" is required.', 'devices'), 400));
     }
 
     const response: DevicesResponse = {
@@ -186,7 +186,7 @@ export default class RestUserController {
    */
   public devicesAction = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     if (typeof req.body.payload !== 'object' || typeof req.body.payload.devices !== 'object') {
-      return next(new AppError(res.__('Page Not Found.'), 404));
+      return next(new AppError(res.__('The parameter "%s" is required.', 'devices'), 400));
     }
 
     const response: DevicesResponse = {

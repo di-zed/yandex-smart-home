@@ -48,7 +48,7 @@ export interface ConfigInterface {
    * @see UserRepository.getUserById
    * @example
    * yandexSmartHome(app, {
-   *   functionGetUserById: async function (userId: number): Promise<UserInterface> { ... },
+   *   functionGetUserById: async function (userId: string | number): Promise<UserInterface> { ... },
    * });
    */
   functionGetUserById?: Function;

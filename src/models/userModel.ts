@@ -13,12 +13,7 @@ export interface UserInterface {
   /**
    * Identifier.
    */
-  id: number;
-
-  /**
-   * Full Name.
-   */
-  full_name?: string;
+  id: string | number;
 
   /**
    * Email Address.
@@ -29,6 +24,11 @@ export interface UserInterface {
    * Password.
    */
   password?: string;
+
+  /**
+   * Full Name.
+   */
+  fullName?: string;
 
   /**
    * List of available device IDs.

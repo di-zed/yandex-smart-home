@@ -18,10 +18,10 @@ export interface ClientInterface {
   /**
    * Application ID.
    */
-  client_id: string;
+  clientId: string;
 
   /**
    * Application Secret.
    */
-  client_secret: string;
+  clientSecret: string;
 }

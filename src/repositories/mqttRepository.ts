@@ -194,7 +194,7 @@ class MqttRepository {
    * @returns string
    */
   public getTopicUserName(user: UserInterface): string {
-    // return user.full_name ? user.full_name.replace(/\s/g, '_') : user.email;
+    // return user.fullName ? user.fullName.replace(/\s/g, '_') : user.email;
     return user.email;
   }
 

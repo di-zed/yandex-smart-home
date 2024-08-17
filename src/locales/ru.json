@@ -20,5 +20,8 @@
 	"A user with ID #%s does not exist.": "Пользователь с идентификатором #%s не существует.",
 	"A user with email \"%s\" does not exist.": "Пользователь с адресом электронной почты \"%s\" не существует.",
 	"A user with name/email \"%s\" does not exist.": "Пользователь с именем/адресом электронной почты \"%s\" не существует.",
-	"Can not find \"%s\" on this server!": "Не могу найти \"%s\" на этом сервере!"
+	"Can not find \"%s\" on this server!": "Не могу найти \"%s\" на этом сервере!",
+	"The parameter \"%s\" is required.": "Параметр \"%s\" обязателен.",
+	"Invalid input data.": "Неверные входные данные.",
+	"This client does not exist.": "Такого клиента не существует."
 }

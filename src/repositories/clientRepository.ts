@@ -26,8 +26,8 @@ class ClientRepository {
       if (appId === parseInt(process.env.YANDEX_APP_ID as string, 10)) {
         return resolve({
           id: appId,
-          client_id: process.env.YANDEX_APP_CLIENT_ID as string,
-          client_secret: process.env.YANDEX_APP_CLIENT_SECRET as string,
+          clientId: process.env.YANDEX_APP_CLIENT_ID as string,
+          clientSecret: process.env.YANDEX_APP_CLIENT_SECRET as string,
         });
       }
       return reject(i18n.__('A client with App ID #%s does not exist.', String(appId)));
@@ -50,8 +50,8 @@ class ClientRepository {
       if (clientId === process.env.YANDEX_APP_CLIENT_ID) {
         return resolve({
           id: parseInt(process.env.YANDEX_APP_ID as string, 10),
-          client_id: clientId,
-          client_secret: process.env.YANDEX_APP_CLIENT_SECRET as string,
+          clientId: clientId,
+          clientSecret: process.env.YANDEX_APP_CLIENT_SECRET as string,
         });
       }
       return reject(i18n.__('A client with Client ID "%s" does not exist.', clientId));
