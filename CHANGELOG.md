@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.2.2] - 2024-08-17
+
+### Fixed
+
+- Builded the project.
+
 ## [1.2.1] - 2024-08-17
 
 ### Changed
