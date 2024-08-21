@@ -2,6 +2,9 @@
  * @author DiZed Team
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env' });
+
 import express, { Application } from 'express';
 import fs from 'fs';
 import https from 'https';

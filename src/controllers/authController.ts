@@ -5,7 +5,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import AppError from '../errors/appError';
-import catchAsync from '../errors/catchAsync';
 import { ClientInterface } from '../models/clientModel';
 import { UserInterface } from '../models/userModel';
 import configProvider from '../providers/configProvider';
@@ -24,7 +23,7 @@ export default class AuthController {
    * @param next
    * @returns void
    */
-  public protect = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public async protect(req: Request, res: Response, next: NextFunction): Promise<void> {
     let token: string = '';
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
@@ -44,7 +43,7 @@ export default class AuthController {
     }
 
     return next();
-  });
+  }
 
   /**
    * GET Method.
@@ -56,7 +55,7 @@ export default class AuthController {
    * @param next
    * @returns void
    */
-  public login = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     const authParams: AuthParams = this.getAuthParams(req.query);
     if (!this.isAuthRequestValid(authParams)) {
       return next(new AppError(res.__('Invalid input data.'), 400));
@@ -75,7 +74,7 @@ export default class AuthController {
       params: authParams,
       error: req.query.error || '',
     });
-  });
+  }
 
   /**
    * POST Method.
@@ -87,7 +86,7 @@ export default class AuthController {
    * @param next
    * @returns void
    */
-  public loginPost = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public async loginPost(req: Request, res: Response, next: NextFunction): Promise<void> {
     const authParams: AuthParams = this.getAuthParams(req.body);
     if (!this.isAuthRequestValid(authParams)) {
       return next(new AppError(res.__('Invalid input data.'), 400));
@@ -125,7 +124,7 @@ export default class AuthController {
           scope: authParams.scope,
         }).toString(),
     );
-  });
+  }
 
   /**
    * POST Method.
@@ -140,7 +139,7 @@ export default class AuthController {
    * @param next
    * @returns Response
    */
-  public token = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+  public async token(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     const code: string = req.body.code as string;
     if (!code) {
       return next(new AppError(res.__('The parameter "%s" is required.', 'code'), 400));
@@ -159,7 +158,7 @@ export default class AuthController {
     } catch (err) {
       return next(new AppError(res.__('Page Not Found.'), 404));
     }
-  });
+  }
 
   /**
    * Get Auth Parameters.

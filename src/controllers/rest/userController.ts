@@ -8,7 +8,6 @@ import configProvider from '../../providers/configProvider';
 import mqttProvider from '../../providers/mqttProvider';
 import deviceRepository from '../../repositories/deviceRepository';
 import mqttRepository, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../../repositories/mqttRepository';
-import catchAsync from '../../errors/catchAsync';
 import { Device } from '../../devices/device';
 import { Capability, CapabilityState, CapabilityStateActionResult } from '../../devices/capability';
 import { Property, PropertyState } from '../../devices/property';
@@ -28,7 +27,7 @@ export default class RestUserController {
    * @param res
    * @returns Response
    */
-  public unlink = catchAsync(async (req: Request, res: Response): Promise<Response> => {
+  public async unlink(req: Request, res: Response): Promise<Response> {
     console.log(
       res.__(
         "The user's provider account (#%s) and Yandex account (#%s) were unlinked (the link between them was deleted by the user).",
@@ -45,7 +44,7 @@ export default class RestUserController {
     return res.status(200).json({
       request_id: req.requestId,
     });
-  });
+  }
 
   /**
    * GET Method.
@@ -56,7 +55,7 @@ export default class RestUserController {
    * @param res
    * @returns Response
    */
-  public devices = catchAsync(async (req: Request, res: Response): Promise<Response> => {
+  public async devices(req: Request, res: Response): Promise<Response> {
     const devices: Device[] = await deviceRepository.getUserDevices(req.currentUser.id);
 
     const response: DevicesResponse = {
@@ -77,7 +76,7 @@ export default class RestUserController {
     });
 
     return res.status(200).json(response);
-  });
+  }
 
   /**
    * POST Method.
@@ -88,7 +87,7 @@ export default class RestUserController {
    * @param res
    * @returns Response
    */
-  public devicesQuery = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+  public async devicesQuery(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     if (typeof req.body.devices !== 'object') {
       return next(new AppError(res.__('The parameter "%s" is required.', 'devices'), 400));
     }
@@ -173,7 +172,7 @@ export default class RestUserController {
     }
 
     return res.status(200).json(response);
-  });
+  }
 
   /**
    * POST Method.
@@ -184,7 +183,7 @@ export default class RestUserController {
    * @param res
    * @returns Response | void
    */
-  public devicesAction = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
+  public async devicesAction(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     if (typeof req.body.payload !== 'object' || typeof req.body.payload.devices !== 'object') {
       return next(new AppError(res.__('The parameter "%s" is required.', 'devices'), 400));
     }
@@ -255,5 +254,5 @@ export default class RestUserController {
     }
 
     return res.status(200).json(response);
-  });
+  }
 }

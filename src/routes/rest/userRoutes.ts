@@ -3,6 +3,7 @@
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
 import { Router } from 'express';
+import catchAsync from '../../errors/catchAsync';
 import AuthController from '../../controllers/authController';
 import RestUserController from '../../controllers/rest/userController';
 /**
@@ -37,16 +38,27 @@ class UserRoutes {
    * @protected
    */
   protected initRoutes(): void {
-    const authController = new AuthController();
+    const authController: AuthController = new AuthController();
 
     // Notification of unlinked accounts.
-    this.router.route('/unlink').post(authController.protect, this.controller.unlink);
+    this.router
+      .route('/unlink')
+      .post(catchAsync(authController.protect.bind(authController)), catchAsync(this.controller.unlink.bind(this.controller)));
+
     // Information about user devices.
-    this.router.route('/devices').get(authController.protect, this.controller.devices);
+    this.router
+      .route('/devices')
+      .get(catchAsync(authController.protect.bind(authController)), catchAsync(this.controller.devices.bind(this.controller)));
+
     // Information about the states of user devices.
-    this.router.route('/devices/query').post(authController.protect, this.controller.devicesQuery);
+    this.router
+      .route('/devices/query')
+      .post(catchAsync(authController.protect.bind(authController)), catchAsync(this.controller.devicesQuery.bind(this.controller)));
+
     // Change device state.
-    this.router.route('/devices/action').post(authController.protect, this.controller.devicesAction);
+    this.router
+      .route('/devices/action')
+      .post(catchAsync(authController.protect.bind(authController)), catchAsync(this.controller.devicesAction.bind(this.controller)));
   }
 
   /**

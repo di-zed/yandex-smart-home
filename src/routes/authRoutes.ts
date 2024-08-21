@@ -3,6 +3,7 @@
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
 import { Router } from 'express';
+import catchAsync from '../errors/catchAsync';
 import AuthController from '../controllers/authController';
 /**
  * Auth Routes.
@@ -37,9 +38,13 @@ class AuthRoutes {
    */
   protected initRoutes(): void {
     // API Authorization Endpoint.
-    this.router.route('/login').get(this.controller.login).post(this.controller.loginPost);
+    this.router
+      .route('/login')
+      .get(catchAsync(this.controller.login.bind(this.controller)))
+      .post(catchAsync(this.controller.loginPost.bind(this.controller)));
+
     // Token Endpoint.
-    this.router.route('/token').post(this.controller.token);
+    this.router.route('/token').post(catchAsync(this.controller.token.bind(this.controller)));
   }
 
   /**

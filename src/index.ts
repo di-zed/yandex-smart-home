@@ -5,7 +5,6 @@
 import express, { Application } from 'express';
 import expressRuid from 'express-ruid';
 import path from 'path';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import i18n from 'i18n';
 import helmet from 'helmet';
@@ -14,6 +13,7 @@ import hpp from 'hpp';
 import configProvider from './providers/configProvider';
 import mqttProvider from './providers/mqttProvider';
 import redisProvider from './providers/redisProvider';
+import skillRepository from './repositories/skillRepository';
 import Routes from './routes';
 import { ConfigInterface } from './interfaces/configInterface';
 import { ISubscriptionGrant } from 'mqtt/src/lib/client';
@@ -44,8 +44,6 @@ class YandexSmartHome {
    * @protected
    */
   protected setConfig(app: Application): void {
-    dotenv.config({ path: './.env' });
-
     // Parse Cookie header and populate req.cookies with an object keyed by the cookie names.
     app.use(cookieParser());
 
@@ -74,7 +72,10 @@ class YandexSmartHome {
     app.use(
       helmet({
         contentSecurityPolicy: {
-          directives: { 'script-src': ['cdn.jsdelivr.net'] },
+          directives: {
+            defaultSrc: ["'self'", 'social.yandex.net'],
+            scriptSrc: ["'self'", 'cdn.jsdelivr.net'],
+          },
         },
       }),
     );
@@ -121,13 +122,20 @@ class YandexSmartHome {
   protected subscribeMqtt(): void {
     mqttProvider.connect().then((): void => {
       mqttProvider
-        .subscribe((topic: string, message: string): void => {
+        .subscribe((topic: string, newMessage: string): void => {
           try {
-            mqttProvider.setTopicMessage(topic, message).then((): void => {
-              mqttProvider.listenTopic(topic, message);
+            mqttProvider.getTopicMessage(topic).then((oldMessage: string | undefined): void => {
+              if (oldMessage !== newMessage) {
+                mqttProvider.setTopicMessage(topic, newMessage).then((): void => {
+                  mqttProvider.listenTopic(topic, newMessage);
+                  skillRepository.callbackState(topic, newMessage).catch((err) => {
+                    console.log(err);
+                  });
+                });
+              }
             });
           } catch (err) {
-            console.log(err, topic, message);
+            console.log(err, topic, newMessage);
           }
         })
         .then((subscriptionGrants: ISubscriptionGrant[]): void => {

@@ -1,5 +1,16 @@
 # CHANGE LOG
 
+## [1.3.0] - 2024-08-21
+
+### Added
+
+- Notification about device state change.
+
+### Fixed
+
+- ENV initialization.
+- Content Security Policy rules.
+
 ## [1.2.2] - 2024-08-17
 
 ### Fixed
