@@ -73,8 +73,8 @@ class YandexSmartHome {
       helmet({
         contentSecurityPolicy: {
           directives: {
-            defaultSrc: ["'self'", 'social.yandex.net'],
             scriptSrc: ["'self'", 'cdn.jsdelivr.net'],
+            'form-action': null, // @todo It should be like ["'self'", 'social.yandex.net'] but it doesn't work on mobile.
           },
         },
       }),
@@ -129,7 +129,7 @@ class YandexSmartHome {
                 mqttProvider.setTopicMessage(topic, newMessage).then((): void => {
                   mqttProvider.listenTopic(topic, newMessage);
                   skillRepository.callbackState(topic, newMessage).catch((err) => {
-                    console.log(err);
+                    console.log(err, topic, newMessage);
                   });
                 });
               }

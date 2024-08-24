@@ -46,8 +46,12 @@ class SkillRepository {
       return false;
     }
 
-    const data: CallbackData = await this.getCallbackData(topic);
-    const tempUserDevices: TempTimeoutDevices = await this.addTempUserDevices(data, topic, message);
+    const callbackData: CallbackData | undefined = await this.getCallbackData(topic);
+    if (!callbackData) {
+      return false;
+    }
+
+    const tempUserDevices: TempTimeoutDevices = await this.addTempUserDevices(callbackData, topic, message);
 
     return new Promise<boolean>((resolve, reject): void => {
       clearTimeout(tempUserDevices.timeoutId);
@@ -55,7 +59,7 @@ class SkillRepository {
       tempUserDevices.timeoutId = setTimeout((): void => {
         const body = {
           ts: this.getUnixTimestamp(),
-          payload: this.getCallbackStatePayload(data.userId, tempUserDevices.deviceTopics),
+          payload: this.getCallbackStatePayload(callbackData.userId, tempUserDevices.deviceTopics),
         };
 
         requestHelper
@@ -64,7 +68,7 @@ class SkillRepository {
           })
           .then((response: RequestOutput): void => {
             if (response && response.status === 'ok') {
-              this.deleteTempUserDevices(data.userId);
+              this.deleteTempUserDevices(callbackData.userId);
               return resolve(true);
             } else {
               return reject(response);
@@ -81,14 +85,14 @@ class SkillRepository {
    * @returns Promise<CallbackData>
    * @protected
    */
-  protected async getCallbackData(topic: string): Promise<CallbackData> {
+  protected async getCallbackData(topic: string): Promise<CallbackData | undefined> {
     if (this.cacheCallbackData[topic] !== undefined) {
       return this.cacheCallbackData[topic];
     }
 
     const topicData: TopicData | undefined = await mqttRepository.getTopicData(topic);
-    if (!topicData) {
-      throw new Error('Topic Data can not be found.');
+    if (!topicData || topicData.topicType !== 'commandTopic') {
+      return undefined;
     }
 
     const user: UserInterface = await userRepository.getUserByNameOrEmail(topicData.userName);

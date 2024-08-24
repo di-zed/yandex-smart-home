@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.3.1] - 2024-08-24
+
+### Fixed
+
+- Notification about device state change for the Command Topics only.
+
 ## [1.3.0] - 2024-08-21
 
 ### Added
