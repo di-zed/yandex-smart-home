@@ -59,6 +59,9 @@ class YandexSmartHome {
     app.set('view engine', 'ejs');
     app.set('views', path.join(__dirname, 'views'));
 
+    // Serving static files.
+    app.use(express.static(path.join(__dirname, 'public')));
+
     // Generates UUID for request and add it to header.
     app.use(
       expressRuid({
@@ -127,15 +130,15 @@ class YandexSmartHome {
             mqttProvider.getTopicMessage(topic).then((oldMessage: string | undefined): void => {
               if (oldMessage !== newMessage) {
                 mqttProvider.setTopicMessage(topic, newMessage).then((): void => {
-                  mqttProvider.listenTopic(topic, newMessage);
-                  skillRepository.callbackState(topic, newMessage).catch((err) => {
-                    console.log(err, topic, newMessage);
+                  mqttProvider.listenTopic(topic, oldMessage, newMessage);
+                  skillRepository.callbackState(topic, oldMessage, newMessage).catch((err) => {
+                    console.log('Skill Callback State Error:', err, '|', topic, '|', oldMessage, '>>', newMessage);
                   });
                 });
               }
             });
           } catch (err) {
-            console.log(err, topic, newMessage);
+            console.log('MQTT Subscribe Error:', err, '|', topic, '|', newMessage);
           }
         })
         .then((subscriptionGrants: ISubscriptionGrant[]): void => {

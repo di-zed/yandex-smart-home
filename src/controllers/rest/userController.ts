@@ -8,9 +8,10 @@ import configProvider from '../../providers/configProvider';
 import mqttProvider from '../../providers/mqttProvider';
 import deviceRepository from '../../repositories/deviceRepository';
 import mqttRepository, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../../repositories/mqttRepository';
+import deviceHelper from '../../helpers/deviceHelper';
 import { Device } from '../../devices/device';
 import { Capability, CapabilityState, CapabilityStateActionResult } from '../../devices/capability';
-import { Property, PropertyState } from '../../devices/property';
+import { Property } from '../../devices/property';
 import { RangeCapabilityState } from '../../devices/capabilities/rangeCapability';
 import AppError from '../../errors/appError';
 
@@ -85,6 +86,7 @@ export default class RestUserController {
    *
    * @param req
    * @param res
+   * @param next
    * @returns Response
    */
   public async devicesQuery(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -107,66 +109,21 @@ export default class RestUserController {
         continue;
       }
 
+      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice);
+
       payloadDevice.capabilities = [];
-      const payloadCapabilities: Capability[] = userDevice?.capabilities ? userDevice.capabilities : [];
-
-      for (const payloadCapabily of payloadCapabilities) {
-        const capabilityState: CapabilityState = <CapabilityState>payloadCapabily.state;
-        const capabilityTopicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames(<MqttInputTopicNames>{
-          user: req.currentUser,
-          deviceId: userDevice.id,
-          capabilityType: payloadCapabily.type,
-          capabilityStateInstance: capabilityState.instance,
-        });
-
-        let topicData: CommandTopicData | undefined = undefined;
-
-        const capabilityMessage: string | undefined = await mqttProvider.getTopicMessage(capabilityTopicNames.commandTopic);
-
-        if (capabilityMessage !== undefined) {
-          if (userDevice?.type) {
-            topicData = await mqttRepository.getCommandTopicData(capabilityTopicNames.commandTopic, userDevice.type, {
-              capabilityType: payloadCapabily.type,
-              capabilityStateInstance: capabilityState.instance,
-            });
-          }
-          capabilityState.value = await mqttRepository.convertMqttMessageToAliceValue(capabilityMessage, topicData);
-        }
-
+      for (const capability of updatedDevice.capabilities || []) {
         payloadDevice.capabilities.push(<Capability>{
-          type: payloadCapabily.type,
-          state: payloadCapabily.state,
+          type: capability.type,
+          state: capability.state,
         });
       }
 
       payloadDevice.properties = [];
-      const payloadProperties: Property[] = userDevice.properties ? userDevice.properties : [];
-
-      for (const payloadProperty of payloadProperties) {
-        const propertyState: PropertyState = <PropertyState>payloadProperty.state;
-        const propertyTopicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames(<MqttInputTopicNames>{
-          user: req.currentUser,
-          deviceId: userDevice.id,
-          propertyType: payloadProperty.type,
-          propertyStateInstance: propertyState.instance,
-        });
-
-        let topicData: CommandTopicData | undefined = undefined;
-
-        const propertyMessage: string | undefined = await mqttProvider.getTopicMessage(propertyTopicNames.commandTopic);
-        if (propertyMessage !== undefined) {
-          if (userDevice?.type) {
-            topicData = await mqttRepository.getCommandTopicData(propertyTopicNames.commandTopic, userDevice.type, {
-              propertyType: payloadProperty.type,
-              propertyStateInstance: propertyState.instance,
-            });
-          }
-          propertyState.value = await mqttRepository.convertMqttMessageToAliceValue(propertyMessage, topicData);
-        }
-
+      for (const property of updatedDevice.properties || []) {
         payloadDevice.properties.push(<Property>{
-          type: payloadProperty.type,
-          state: payloadProperty.state,
+          type: property.type,
+          state: property.state,
         });
       }
     }
@@ -181,6 +138,7 @@ export default class RestUserController {
    *
    * @param req
    * @param res
+   * @param next
    * @returns Response | void
    */
   public async devicesAction(req: Request, res: Response, next: NextFunction): Promise<Response | void> {

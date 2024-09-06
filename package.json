@@ -1,12 +1,13 @@
 {
   "name": "@di-zed/yandex-smart-home",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "The Yandex Smart Home skills for the different device types.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "./node_modules/typescript/bin/tsc && cp -pr ./src/locales/ ./dist/ && cp -pr ./src/views/ ./dist/",
-    "start": "NODE_ENV=production npm i && npm run build && node ./dist/server.js",
+    "copy": "cp -pr ./src/locales/ ./dist/ && cp -pr ./src/public/ ./dist/ && cp -pr ./src/views/ ./dist/",
+    "build": "NODE_ENV=development npm i && ./node_modules/typescript/bin/tsc && npm run copy",
+    "start": "npm run build && NODE_ENV=production npm i && node ./dist/server.js",
     "start:dev": "NODE_ENV=development npm i && npx nodemon --watch \"*.ts\" --exec \"ts-node\" ./src/server.ts",
     "start:prod": "NODE_ENV=production npm i && npx nodemon --watch \"*.ts\" --exec \"ts-node\" ./src/server.ts",
     "lint": "eslint src/**/*.ts --fix"

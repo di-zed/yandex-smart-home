@@ -34,7 +34,7 @@ export default class AuthController {
     }
 
     try {
-      const tokenData: TokenData = await this.getTokenData(token);
+      const tokenData: TokenData = await this.verifyToken(token);
 
       req.currentClient = await clientRepository.getClientById(tokenData.appId);
       req.currentUser = await userRepository.getUserById(tokenData.userId);
@@ -118,7 +118,7 @@ export default class AuthController {
       authParams.redirect_uri +
         '?' +
         new URLSearchParams({
-          code: this.getToken(client.id, user.id, '2 days'),
+          code: this.signToken(client.id, user.id, '2 days'),
           state: authParams.state,
           client_id: authParams.client_id,
           scope: authParams.scope,
@@ -146,12 +146,12 @@ export default class AuthController {
     }
 
     try {
-      const codeData: TokenData = await this.getTokenData(code);
+      const codeData: TokenData = await this.verifyToken(code);
       const client: ClientInterface = await clientRepository.getClientById(codeData.appId);
       const user: UserInterface = await userRepository.getUserById(codeData.userId);
 
       return res.status(200).json({
-        access_token: this.getToken(client.id, user.id, '365 days'),
+        access_token: this.signToken(client.id, user.id, '365 days'),
         token_type: 'bearer',
         expires_in: 60 * 60 * 24 * 365,
       });
@@ -204,7 +204,7 @@ export default class AuthController {
   }
 
   /**
-   * Get Token.
+   * Sign Token.
    *
    * @param appId
    * @param userId
@@ -212,7 +212,7 @@ export default class AuthController {
    * @returns string
    * @protected
    */
-  protected getToken(appId: number, userId: string | number, expiresIn: string): string {
+  protected signToken(appId: number, userId: string | number, expiresIn: string): string {
     const tokenData: TokenData = {
       appId: appId,
       userId: userId,
@@ -223,13 +223,13 @@ export default class AuthController {
   }
 
   /**
-   * Get Token Data.
+   * Verify Token.
    *
    * @param token
    * @returns Promise<TokenData>
    * @protected
    */
-  protected async getTokenData(token: string): Promise<TokenData> {
+  protected async verifyToken(token: string): Promise<TokenData> {
     return new Promise<TokenData>((resolve, reject): void => {
       jwt.verify(token, process.env.JWT_SECRET as string, {}, (err: jwt.VerifyErrors | null, payload: string | jwt.JwtPayload | undefined): void => {
         if (err) {

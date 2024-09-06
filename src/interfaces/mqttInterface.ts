@@ -71,6 +71,11 @@ export interface MqttCommandTopicInterface {
   topic: string;
 
   /**
+   * Name of key for the same value in the State topic.
+   */
+  topicStateKey?: string;
+
+  /**
    * Message Value Mapping [MQTT Message => Alice Value].
    */
   messageValueMapping?: { [key: string]: any };

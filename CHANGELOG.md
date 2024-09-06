@@ -1,5 +1,18 @@
 # CHANGE LOG
 
+## [1.4.0] - 2024-09-06
+
+### Added
+
+- Lifetime for Set topics.
+- Possibility to read data from State topics for devices.
+- Couple of new callbacks: callbackIsSkillCallbackStateAvailable, callbackIsSkillDeviceAvailable.
+- Simple validation for the login form.
+
+### Fixed
+
+- "getUserById" method. User IDs comparing.
+
 ## [1.3.1] - 2024-08-24
 
 ### Fixed

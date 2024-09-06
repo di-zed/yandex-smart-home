@@ -19,21 +19,26 @@
             <h1 class="fw-bold mb-0 fs-2"><%= __('Yandex Smart Home') %></h1>
         </div>
         <div class="modal-body p-5 pt-0">
-            <form class="" method="post" action="/auth/login">
+            <form method="post" action="/auth/login" id="login-form" class="needs-validation" novalidate>
                 <div class="form-floating mb-3">
-                    <input name="email" type="email" class="form-control rounded-3" id="input-email" placeholder="<%= __('Email Address') %>">
+                    <input name="email" type="email" class="form-control rounded-3" id="input-email" placeholder="<%= __('Email Address') %>" required>
                     <label for="input-email"><%= __('Email Address') %></label>
+                    <div class="invalid-feedback"><%= __('The parameter "%s" is required.', __('Email Address')) %></div>
                 </div>
                 <div class="form-floating mb-3">
-                    <input name="password" type="password" class="form-control rounded-3" id="input-password" placeholder="<%= __('Password') %>">
+                    <input name="password" type="password" class="form-control rounded-3" id="input-password" placeholder="<%= __('Password') %>" required>
                     <label for="input-password"><%= __('Password') %></label>
+                    <div class="invalid-feedback"><%= __('The parameter "%s" is required.', __('Password')) %></div>
                 </div>
-                <button class="w-100 mb-2 btn btn-lg rounded-3 btn-primary" type="submit"><%= __('Sign In') %></button>
-                <small class="text-body-secondary"><%= __('By clicking Sign In, you agree to the terms of use.') %></small>
+                <button class="w-100 mb-2 btn btn-lg rounded-3 btn-dark" type="submit">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none"></span>
+                    <%= __('Sign In') %>
+                </button>
                 <% Object.keys(params).forEach(key => { %>
                     <input type="hidden" name="<%= key %>" value="<%= params[key] %>">
                 <% }); %>
             </form>
+            <small class="text-body-secondary">© DiZed Team 2024</small>
         </div>
     </div>
 </div>

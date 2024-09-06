@@ -155,10 +155,42 @@ export interface ConfigInterface {
    * @see MqttProvider.listenTopic
    * @example
    * yandexSmartHome(app, {
-   *   callbackListenTopic: function (topic: string, message: string): void { ... },
+   *   callbackListenTopic: function (topic: string, oldMessage: string | undefined, newMessage: string): void { ... },
    * });
    */
   callbackListenTopic?: Function;
+
+  /**
+   * Additional checks that the Skill Callback State can be sent to the Yandex server.
+   *
+   * @see SkillRepository.isCallbackStateAvailable
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackIsSkillCallbackStateAvailable: async function (
+   *      topicData: TopicData,
+   *      oldMessage: string | undefined,
+   *      newMessage: string,
+   *      result: boolean
+   *   ): Promise<boolean> { ... },
+   * });
+   */
+  callbackIsSkillCallbackStateAvailable?: Function;
+
+  /**
+   * Additional checks that the Skill Device can be sent to the Yandex server.
+   *
+   * @see SkillRepository.isDeviceAvailable
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackIsSkillDeviceAvailable: async function (
+   *      user: UserInterface,
+   *      device: Device,
+   *      topicNames: MqttOutputTopicNames,
+   *      result: boolean
+   *   ): Promise<boolean> { ... },
+   * });
+   */
+  callbackIsSkillDeviceAvailable?: Function;
 
   /**
    * The config file with the user list. Each user should have "id", "email", and "password" fields.

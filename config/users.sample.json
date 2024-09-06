@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "email": "admin@ysm.com",
+    "email": "yandex@smart.home",
     "password": "Aadmin!1",
     "fullName": "AdminDefault",
     "deviceIds": ["thermostat_unique_id"]

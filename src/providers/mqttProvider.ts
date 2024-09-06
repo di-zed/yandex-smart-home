@@ -151,6 +151,13 @@ export class MqttProvider {
     const redisClient: RedisClientType = await redisProvider.getClientAsync();
     const result: number = await redisClient.hSet('topics', topic, message);
 
+    const cacheLifetimeSec: number = parseInt(process.env.TOPIC_COMMAND_CACHE_LIFETIME_SEC as string, 10);
+    if (!isNaN(cacheLifetimeSec)) {
+      if (await mqttRepository.isTopicType(topic, 'commandTopic')) {
+        await redisClient.sendCommand(['HEXPIRE', 'topics', String(cacheLifetimeSec), 'FIELDS', '1', topic]);
+      }
+    }
+
     return result > 0;
   }
 
@@ -168,20 +175,51 @@ export class MqttProvider {
   }
 
   /**
+   * Get Value from the State Topic by Key.
+   *
+   * @param topic
+   * @param key
+   * @returns Promise<string | undefined>
+   */
+  public async getStateTopicValueByKey(topic: string, key: string): Promise<string | undefined> {
+    if (!topic.trim() || !key.trim()) {
+      return undefined;
+    }
+    if (!(await mqttRepository.isTopicType(topic, 'stateTopic'))) {
+      return undefined;
+    }
+
+    let result: string | undefined = undefined;
+
+    const message: string | undefined = await this.getTopicMessage(topic);
+    if (message !== undefined) {
+      try {
+        const data = JSON.parse(message);
+        result = String(data[key]);
+      } catch (err) {
+        return undefined;
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Listen Topic.
    *
    * @param topic
-   * @param message
+   * @param oldMessage
+   * @param newMessage
    * @returns void
    */
-  public listenTopic(topic: string, message: string): void {
+  public listenTopic(topic: string, oldMessage: string | undefined, newMessage: string): void {
     if (process.env.NODE_ENV === 'development' && process.env.LOG_LISTEN_TOPIC === '1') {
-      console.log(topic, '>>', message);
+      console.log(topic, '>>', newMessage);
     }
 
     const callbackListenTopic = configProvider.getConfigOption('callbackListenTopic');
     if (typeof callbackListenTopic === 'function') {
-      callbackListenTopic(topic, message);
+      callbackListenTopic(topic, oldMessage, newMessage);
     }
   }
 }

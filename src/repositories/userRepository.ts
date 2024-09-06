@@ -33,7 +33,7 @@ class UserRepository {
     const configUsers: UserInterface[] = await this.getConfigUsers();
 
     return new Promise<UserInterface>((resolve, reject): void => {
-      const user: UserInterface | undefined = configUsers.find((element: UserInterface): boolean => element.id === userId);
+      const user: UserInterface | undefined = configUsers.find((element: UserInterface): boolean => String(element.id) === String(userId));
       if (user) {
         const result: UserInterface = JSON.parse(JSON.stringify(user));
         delete result.password;
