@@ -90,7 +90,7 @@ export class RedisProvider {
       socket: socketOptions,
     });
 
-    client.on('error', (err): void => console.log(err));
+    client.on('error', (err): void => console.log('ERROR! Redis Connect.', err));
     // client.on('connect', (): void => console.log('Redis Connected!'));
     // client.on('reconnecting', (): void => console.log('Redis Reconnecting...'));
     client.on('ready', (): void => {

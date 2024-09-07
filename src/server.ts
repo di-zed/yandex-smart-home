@@ -11,13 +11,13 @@ import https from 'https';
 import yandexSmartHome from './index';
 
 process.on('unhandledRejection', (err: any) => {
-  console.log('Unhandled Rejection! Shutting Down!');
+  console.log('ERROR! Unhandled Rejection! Shutting Down!');
   console.log(err);
   process.exit(1);
 });
 
 process.on('uncaughtException', (err: any) => {
-  console.log('Uncaught Exception! Shutting Down!');
+  console.log('ERROR! Uncaught Exception! Shutting Down!');
   console.log(err);
   process.exit(1);
 });
@@ -57,9 +57,9 @@ try {
     if (err.code === 'EADDRINUSE') {
       console.log('ERROR! The server can NOT start. The address is already in use.');
     } else {
-      console.log(err);
+      console.log('ERROR! The server can NOT start.', err);
     }
   });
 } catch (err) {
-  console.log(err);
+  console.log('ERROR! The server can NOT start.', err);
 }

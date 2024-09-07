@@ -203,7 +203,7 @@ export default class RestUserController {
             actionResult = { status: 'DONE' };
           }
         } catch (err) {
-          console.log(err, actionResult);
+          console.log('ERROR! User Devices Action.', { err, actionResult });
         }
 
         delete capabilityState.value;

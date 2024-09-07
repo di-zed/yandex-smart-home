@@ -214,7 +214,7 @@ export class MqttProvider {
    */
   public listenTopic(topic: string, oldMessage: string | undefined, newMessage: string): void {
     if (process.env.NODE_ENV === 'development' && process.env.LOG_LISTEN_TOPIC === '1') {
-      console.log(topic, '>>', newMessage);
+      console.log('Listen Topic.', { topic, newMessage });
     }
 
     const callbackListenTopic = configProvider.getConfigOption('callbackListenTopic');

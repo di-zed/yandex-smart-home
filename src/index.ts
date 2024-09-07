@@ -132,13 +132,13 @@ class YandexSmartHome {
                 mqttProvider.setTopicMessage(topic, newMessage).then((): void => {
                   mqttProvider.listenTopic(topic, oldMessage, newMessage);
                   skillRepository.callbackState(topic, oldMessage, newMessage).catch((err) => {
-                    console.log('Skill Callback State Error:', err, '|', topic, '|', oldMessage, '>>', newMessage);
+                    console.log('ERROR! Skill Callback State.', { err, topic, oldMessage, newMessage });
                   });
                 });
               }
             });
           } catch (err) {
-            console.log('MQTT Subscribe Error:', err, '|', topic, '|', newMessage);
+            console.log('ERROR! MQTT Subscribe.', { err, topic, newMessage });
           }
         })
         .then((subscriptionGrants: ISubscriptionGrant[]): void => {

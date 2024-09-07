@@ -94,6 +94,9 @@ class SkillRepository {
             } else {
               return reject(response);
             }
+          })
+          .catch((err) => {
+            console.log('ERROR! Skill Callback State Request.', err);
           });
       }, 5000);
     });

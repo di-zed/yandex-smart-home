@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.4.1] - 2024-09-07
+
+### Fixed
+
+- Now the logs are more understandable and convenient.
+
 ## [1.4.0] - 2024-09-06
 
 ### Added
