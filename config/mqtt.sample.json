@@ -13,7 +13,7 @@
             "stateInstance": "on"
           },
           "topic": "<user_name>/climate/<device_id>/power/set",
-          "topicStateKey": "mode",
+          "topicStateKeys": ["mode"],
           "messageValueMapping": {
             "off": false,
             "__default": true
@@ -29,7 +29,7 @@
             "stateInstance": "temperature"
           },
           "topic": "<user_name>/climate/<device_id>/temperature/set",
-          "topicStateKey": "temp"
+          "topicStateKeys": ["temp"]
         },
         {
           "capability": {
@@ -37,7 +37,7 @@
             "stateInstance": "thermostat"
           },
           "topic": "<user_name>/climate/<device_id>/thermostat/set",
-          "topicStateKey": "mode",
+          "topicStateKeys": ["mode"],
           "messageValueMapping": {
             "off": "auto"
           }
@@ -48,7 +48,7 @@
             "stateInstance": "oscillation"
           },
           "topic": "<user_name>/climate/<device_id>/oscillation/set",
-          "topicStateKey": ""
+          "topicStateKeys": []
         }
       ]
     }

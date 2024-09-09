@@ -174,7 +174,7 @@ class MqttRepository {
               capabilityStateInstance: commandTopic.capability?.stateInstance ? commandTopic.capability.stateInstance : '',
               propertyType: commandTopic.property?.type ? commandTopic.property.type : '',
               propertyStateInstance: commandTopic.property?.stateInstance ? commandTopic.property.stateInstance : '',
-              topicStateKey: commandTopic.topicStateKey || '',
+              topicStateKeys: commandTopic.topicStateKeys || [],
               messageValueMapping: commandTopic.messageValueMapping || {},
               userName: parsedTopicName.userName,
             };
@@ -436,7 +436,7 @@ export type CommandTopicData = ParsedTopicName & {
   capabilityStateInstance: string;
   propertyType: string;
   propertyStateInstance: string;
-  topicStateKey: string;
+  topicStateKeys: string[];
   messageValueMapping: { [key: string]: any };
 };
 

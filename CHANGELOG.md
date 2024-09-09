@@ -1,5 +1,15 @@
 # CHANGE LOG
 
+## [1.4.2] - 2024-09-09
+
+### Changed
+
+- "topicStateKey" -> "topicStateKeys". It can be helpful if you have a couple of topic versions on different devices.
+
+### Fixed
+
+- Changing device range capability value with the relative flag.
+
 ## [1.4.1] - 2024-09-07
 
 ### Fixed

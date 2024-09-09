@@ -193,13 +193,13 @@ class SkillRepository {
 
     let result: boolean = false;
 
-    const topicStateKeys: string[] = [];
+    let topicStateKeys: string[] = [];
     const configTopics: MqttTopicInterface[] = await mqttRepository.getConfigTopics();
 
     for (const configTopic of configTopics) {
       for (const commandTopic of configTopic.commandTopics) {
-        if (commandTopic.topicStateKey) {
-          topicStateKeys.push(commandTopic.topicStateKey);
+        if (commandTopic.topicStateKeys !== undefined) {
+          topicStateKeys = topicStateKeys.concat(commandTopic.topicStateKeys);
         }
       }
     }

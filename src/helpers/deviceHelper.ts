@@ -2,8 +2,9 @@
  * @author DiZed Team
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
-import { UserInterface } from '../models/userModel';
+import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
+import { UserInterface } from '../models/userModel';
 import mqttRepository, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../repositories/mqttRepository';
 import mqttProvider from '../providers/mqttProvider';
 
@@ -44,7 +45,7 @@ class DeviceHelper {
 
       let capabilityMessage: string | undefined = await mqttProvider.getTopicMessage(capabilityTopicNames.commandTopic);
       if (capabilityMessage === undefined && capabilityTopicData !== undefined && isStateTopicChecked) {
-        capabilityMessage = await mqttProvider.getStateTopicValueByKey(capabilityTopicNames.stateTopic, capabilityTopicData.topicStateKey);
+        capabilityMessage = await mqttProvider.getStateTopicValueByKey(capabilityTopicNames.stateTopic, capabilityTopicData.topicStateKeys);
       }
 
       if (capabilityMessage !== undefined) {
@@ -74,7 +75,7 @@ class DeviceHelper {
 
       let propertyMessage: string | undefined = await mqttProvider.getTopicMessage(propertyTopicNames.commandTopic);
       if (propertyMessage === undefined && propertyTopicData !== undefined && isStateTopicChecked) {
-        propertyMessage = await mqttProvider.getStateTopicValueByKey(propertyTopicNames.stateTopic, propertyTopicData.topicStateKey);
+        propertyMessage = await mqttProvider.getStateTopicValueByKey(propertyTopicNames.stateTopic, propertyTopicData.topicStateKeys);
       }
 
       if (propertyMessage !== undefined) {
@@ -83,6 +84,26 @@ class DeviceHelper {
     }
 
     return deviceClone;
+  }
+
+  /**
+   * Get Device Capability.
+   *
+   * @param device
+   * @param capabilityType
+   * @param capabilityStateInstance
+   * @returns Capability | undefined
+   */
+  public getDeviceCapability(device: Device, capabilityType: string, capabilityStateInstance: string): Capability | undefined {
+    let result: Capability | undefined = undefined;
+
+    for (const capability of device.capabilities || []) {
+      if (capability.type === capabilityType && capability.state?.instance === capabilityStateInstance) {
+        result = <Capability>JSON.parse(JSON.stringify(capability));
+      }
+    }
+
+    return result;
   }
 }
 

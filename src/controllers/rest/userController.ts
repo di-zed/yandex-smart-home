@@ -159,7 +159,8 @@ export default class RestUserController {
         continue;
       }
 
-      const payloadCapabilities: Capability[] = payloadDevice?.capabilities ? payloadDevice.capabilities : [];
+      const payloadCapabilities: Capability[] = payloadDevice.capabilities || [];
+      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice);
 
       for (const payloadCapability of payloadCapabilities) {
         const capabilityState: CapabilityState = <CapabilityState>payloadCapability.state;
@@ -181,19 +182,23 @@ export default class RestUserController {
             let value = capabilityState.value;
 
             let topicData: CommandTopicData | undefined = undefined;
-            if (userDevice?.type) {
-              topicData = await mqttRepository.getCommandTopicData(topicNames.commandTopic, userDevice.type, {
+            if (updatedDevice.type) {
+              topicData = await mqttRepository.getCommandTopicData(topicNames.commandTopic, updatedDevice.type, {
                 capabilityType: payloadCapability.type,
                 capabilityStateInstance: capabilityState.instance,
               });
             }
 
-            const topicMessage: string | undefined = await mqttProvider.getTopicMessage(topicNames.commandTopic);
-            if (topicMessage !== undefined) {
-              if (topicData !== undefined && topicData.capabilityType === 'devices.capabilities.range') {
-                const rangeState: RangeCapabilityState = <RangeCapabilityState>JSON.parse(JSON.stringify(capabilityState));
-                if (rangeState.relative) {
-                  value += await mqttRepository.convertMqttMessageToAliceValue(topicMessage, topicData);
+            if (topicData !== undefined && topicData.capabilityType === 'devices.capabilities.range') {
+              const rangeState: RangeCapabilityState = <RangeCapabilityState>JSON.parse(JSON.stringify(capabilityState));
+              if (rangeState.relative) {
+                const deviceCapability: Capability | undefined = deviceHelper.getDeviceCapability(
+                  updatedDevice,
+                  payloadCapability.type,
+                  capabilityState.instance,
+                );
+                if (deviceCapability !== undefined) {
+                  value += deviceCapability.state?.value || 0;
                 }
               }
             }

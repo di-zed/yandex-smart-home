@@ -175,14 +175,14 @@ export class MqttProvider {
   }
 
   /**
-   * Get Value from the State Topic by Key.
+   * Get Value from the State Topic by Keys.
    *
    * @param topic
-   * @param key
+   * @param keys
    * @returns Promise<string | undefined>
    */
-  public async getStateTopicValueByKey(topic: string, key: string): Promise<string | undefined> {
-    if (!topic.trim() || !key.trim()) {
+  public async getStateTopicValueByKey(topic: string, keys: string[]): Promise<string | undefined> {
+    if (!topic.trim() || keys.length === 0) {
       return undefined;
     }
     if (!(await mqttRepository.isTopicType(topic, 'stateTopic'))) {
@@ -195,7 +195,11 @@ export class MqttProvider {
     if (message !== undefined) {
       try {
         const data = JSON.parse(message);
-        result = String(data[key]);
+        keys.forEach((key) => {
+          if (result === undefined) {
+            result = data[key] !== undefined ? String(data[key]) : undefined;
+          }
+        });
       } catch (err) {
         return undefined;
       }
