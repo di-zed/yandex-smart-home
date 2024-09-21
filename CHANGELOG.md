@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.4.4] - 2024-09-21
+
+### Fixed
+
+- Improved comparison of emails and topic values.
+
 ## [1.4.3] - 2024-09-09
 
 ### Fixed

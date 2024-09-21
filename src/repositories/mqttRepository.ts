@@ -282,7 +282,7 @@ class MqttRepository {
     if (topicData) {
       for (const [message, value] of Object.entries(topicData.messageValueMapping)) {
         if (value === aliceValue && message !== '__default') {
-          mqttMessage = message;
+          mqttMessage = String(message).toLowerCase();
         }
       }
     }
@@ -296,7 +296,7 @@ class MqttRepository {
           mqttMessage = JSON.stringify(aliceValue);
           break;
         default:
-          mqttMessage = String(aliceValue);
+          mqttMessage = String(aliceValue).toLowerCase();
       }
     }
 
@@ -317,28 +317,29 @@ class MqttRepository {
    */
   public async convertMqttMessageToAliceValue(mqttMessage: string, topicData?: CommandTopicData): Promise<any> {
     let aliceValue: any = undefined;
+    const handledMessage = mqttMessage.toLowerCase();
 
     if (topicData) {
-      if (topicData.messageValueMapping[mqttMessage] !== undefined) {
-        aliceValue = topicData.messageValueMapping[mqttMessage];
+      if (topicData.messageValueMapping[handledMessage] !== undefined) {
+        aliceValue = topicData.messageValueMapping[handledMessage];
       } else if (topicData.messageValueMapping['__default'] !== undefined) {
         aliceValue = topicData.messageValueMapping['__default'];
       }
     }
 
     if (aliceValue === undefined) {
-      if (mqttMessage === 'on' || mqttMessage === 'off') {
-        aliceValue = mqttMessage === 'on';
-      } else if (!isNaN(Number(mqttMessage))) {
-        aliceValue = Number(mqttMessage);
+      if (handledMessage === 'on' || handledMessage === 'off') {
+        aliceValue = handledMessage === 'on';
+      } else if (!isNaN(Number(handledMessage))) {
+        aliceValue = Number(handledMessage);
       } else {
         try {
-          const value = JSON.parse(mqttMessage);
+          const value = JSON.parse(handledMessage);
           if (value && typeof value === 'object') {
             aliceValue = value;
           }
         } catch (err) {
-          aliceValue = mqttMessage.toString();
+          aliceValue = handledMessage.toString();
         }
       }
     }

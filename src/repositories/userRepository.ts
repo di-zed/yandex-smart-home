@@ -60,7 +60,7 @@ class UserRepository {
 
     return new Promise<UserInterface>((resolve, reject): void => {
       const user: UserInterface | undefined = configUsers.find((element: UserInterface): boolean => {
-        return element.email === email && element.password === password;
+        return element.email.toLowerCase() === email.toLowerCase() && element.password === password;
       });
       if (user) {
         const result: UserInterface = JSON.parse(JSON.stringify(user));
@@ -88,7 +88,7 @@ class UserRepository {
     return new Promise<UserInterface>((resolve, reject): void => {
       const user: UserInterface | undefined = configUsers.find((element: UserInterface): boolean => {
         if (nameOrEmail.search('@') !== -1) {
-          return element.email === nameOrEmail;
+          return element.email.toLowerCase() === nameOrEmail.toLowerCase();
         }
         return element.fullName === nameOrEmail;
       });
