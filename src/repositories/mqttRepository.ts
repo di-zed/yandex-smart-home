@@ -317,7 +317,7 @@ class MqttRepository {
    */
   public async convertMqttMessageToAliceValue(mqttMessage: string, topicData?: CommandTopicData): Promise<any> {
     let aliceValue: any = undefined;
-    const handledMessage = mqttMessage.toLowerCase();
+    const handledMessage: string = mqttMessage.toLowerCase();
 
     if (topicData) {
       if (topicData.messageValueMapping[handledMessage] !== undefined) {
@@ -334,7 +334,7 @@ class MqttRepository {
         aliceValue = Number(handledMessage);
       } else {
         try {
-          const value = JSON.parse(handledMessage);
+          const value = JSON.parse(mqttMessage);
           if (value && typeof value === 'object') {
             aliceValue = value;
           }

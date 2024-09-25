@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.4.5] - 2024-09-25
+
+### Fixed
+
+- Convert MQTT Message to Alice Value.
+
 ## [1.4.4] - 2024-09-21
 
 ### Fixed
