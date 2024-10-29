@@ -2,8 +2,8 @@
  * @author DiZed Team
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
-import { ClientInterface } from '../../src/interfaces/models/clientInterface';
-import { UserInterface } from '../../src/interfaces/models/userInterface';
+import { ClientInterface } from '../../src/models/clientModel';
+import { UserInterface } from '../../src/models/userModel';
 
 /**
  * Extend Express Properties.

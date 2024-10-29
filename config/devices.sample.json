@@ -98,6 +98,29 @@
           "instance": "temperature",
           "value": 30
         }
+      },
+      {
+        "type": "devices.properties.event",
+        "retrievable": true,
+        "reportable": true,
+        "parameters": {
+          "instance": "vibration",
+          "events": [
+            {
+              "value": "tilt"
+            },
+            {
+              "value": "fall"
+            },
+            {
+              "value": "vibration"
+            }
+          ]
+        },
+        "state": {
+          "instance": "vibration",
+          "value": ""
+        }
       }
     ],
     "device_info": {

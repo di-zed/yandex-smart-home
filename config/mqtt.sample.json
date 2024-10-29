@@ -24,12 +24,8 @@
             "type": "devices.capabilities.range",
             "stateInstance": "temperature"
           },
-          "property": {
-            "type": "devices.properties.float",
-            "stateInstance": "temperature"
-          },
           "topic": "<user_name>/climate/<device_id>/temperature/set",
-          "topicStateKeys": ["temp"]
+          "topicStateKeys": ["target_temp"]
         },
         {
           "capability": {
@@ -49,6 +45,22 @@
           },
           "topic": "<user_name>/climate/<device_id>/oscillation/set",
           "topicStateKeys": []
+        },
+        {
+          "property": {
+            "type": "devices.properties.float",
+            "stateInstance": "temperature"
+          },
+          "topic": "",
+          "topicStateKeys": ["temp"]
+        },
+        {
+          "property": {
+            "type": "devices.properties.event",
+            "stateInstance": "vibration"
+          },
+          "topic": "",
+          "topicStateKeys": ["vibration"]
         }
       ]
     }

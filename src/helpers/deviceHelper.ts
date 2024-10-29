@@ -4,6 +4,7 @@
  */
 import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
+import { EventProperty } from '../devices/properties/eventProperty';
 import { UserInterface } from '../models/userModel';
 import mqttRepository, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../repositories/mqttRepository';
 import mqttProvider from '../providers/mqttProvider';
@@ -80,6 +81,24 @@ class DeviceHelper {
 
       if (propertyMessage !== undefined) {
         property.state!.value = await mqttRepository.convertMqttMessageToAliceValue(propertyMessage, propertyTopicData);
+      }
+
+      /**
+       * Set the default wrong event value to easily recognize it in the future.
+       */
+
+      if (property.type === 'devices.properties.event') {
+        let isValidEventValue: boolean = false;
+
+        for (const event of (<EventProperty>property).parameters?.events || []) {
+          if (event.value === propertyMessage) {
+            isValidEventValue = true;
+          }
+        }
+
+        if (!isValidEventValue) {
+          property.state!.value = process.env.DEVICE_PROPERTY_EVENT_DEFAULT_VALUE;
+        }
       }
     }
 
