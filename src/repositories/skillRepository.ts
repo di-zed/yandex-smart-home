@@ -6,9 +6,10 @@ import { RedisClientType } from 'redis';
 import { UserInterface } from '../models/userModel';
 import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
+import { EventPropertyParameters } from '../devices/properties/eventProperty';
 import { Property } from '../devices/property';
 import { ResponsePayload } from '../devices/response';
-import { MqttTopicInterface } from '../interfaces/mqttInterface';
+import { MqttCommandTopicInterface, MqttTopicInterface } from '../interfaces/mqttInterface';
 import mqttRepository, { MqttOutputTopicNames, TopicData } from './mqttRepository';
 import deviceRepository from './deviceRepository';
 import userRepository from './userRepository';
@@ -66,7 +67,7 @@ class SkillRepository {
       return false;
     }
 
-    const updatedDevice: Device = await deviceHelper.updateUserDevice(user, device);
+    const updatedDevice: Device = await deviceHelper.updateUserDevice(user, device, true);
     const tempTimeoutDevices: TempTimeoutDevices = await this.addTempUserDevice(user, updatedDevice);
 
     return new Promise<boolean>((resolve, reject): void => {
@@ -88,6 +89,20 @@ class SkillRepository {
           .then((response: RequestOutput): void => {
             this.logLatestSkillUpdate(user.email, body.payload, response);
 
+            /**
+             * It is important to send a request to Alice in case we receive an invalid value in the "event" property.
+             * These properties in Alice do not matter for stabilizing the situation.
+             * For example, if the device turns over and then is lifted, then we will have to delete the
+             * "event" property (it's implemented in deviceHelper.updateUserDevice).
+             * Accordingly, we need to notify Alice about the change in the set of properties.
+             */
+            const self = this;
+            this.hasWrongPropertyEvent(device, oldMessage, newMessage).then(function (result: boolean) {
+              if (result) {
+                self.callbackDiscovery(user.id).catch((err) => console.log('ERROR! Skill Callback Discovery Request.', err));
+              }
+            });
+
             if (response && response.status === 'ok') {
               this.deleteTempUserDevices(user);
               return resolve(true);
@@ -99,6 +114,46 @@ class SkillRepository {
             console.log('ERROR! Skill Callback State Request.', err);
           });
       }, 5000);
+    });
+  }
+
+  /**
+   * Notification about device parameter change.
+   * https://yandex.ru/dev/dialogs/smart-home/doc/en/reference-alerts/post-skill_id-callback-discovery
+   *
+   * @param userId
+   * @returns Promise<boolean>
+   */
+  public async callbackDiscovery(userId: string | number): Promise<boolean> {
+    const skillId: string = (process.env.YANDEX_APP_SKILL_ID as string).trim();
+    const skillToken: string = (process.env.YANDEX_APP_SKILL_TOKEN as string).trim();
+
+    if (!skillId || !skillToken) {
+      return false;
+    }
+
+    return new Promise<boolean>((resolve, reject): void => {
+      const body = {
+        ts: this.getUnixTimestamp(),
+        payload: {
+          user_id: String(userId),
+        },
+      };
+
+      requestHelper
+        .post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/discovery`, body, {
+          headers: { Authorization: `Bearer ${skillToken}` },
+        })
+        .then((response: RequestOutput): void => {
+          if (response && response.status === 'ok') {
+            return resolve(true);
+          } else {
+            return reject(response);
+          }
+        })
+        .catch((err) => {
+          console.log('ERROR! Skill Callback Discovery Request.', err);
+        });
     });
   }
 
@@ -152,15 +207,65 @@ class SkillRepository {
   }
 
   /**
+   * Get State Topic changes.
+   *
+   * @param oldMessage
+   * @param newMessage
+   * @param deviceType
+   * @returns Promise<ChangedCommandTopicInterface[]>
+   */
+  public async getStateTopicChanges(
+    oldMessage: string | undefined,
+    newMessage: string,
+    deviceType: string = '',
+  ): Promise<ChangedCommandTopicInterface[]> {
+    const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
+    if (!isStateTopicChecked) {
+      return [];
+    }
+
+    const result: ChangedCommandTopicInterface[] = [];
+    const configTopics: MqttTopicInterface[] = await mqttRepository.getConfigTopics();
+
+    try {
+      const oldStateTopic = oldMessage ? JSON.parse(oldMessage) : {};
+      const newStateTopic = JSON.parse(newMessage);
+
+      for (const configTopic of configTopics) {
+        if (deviceType) {
+          if (configTopic.deviceType !== deviceType) {
+            continue;
+          }
+        }
+        for (const commandTopic of configTopic.commandTopics) {
+          for (const key of commandTopic.topicStateKeys || []) {
+            if (oldStateTopic[key] !== newStateTopic[key]) {
+              const item: ChangedCommandTopicInterface = Object.assign(commandTopic, {
+                deviceType: configTopic.deviceType,
+                mqttValueOld: oldStateTopic[key],
+                mqttValueNew: newStateTopic[key],
+              });
+              result.push(item);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      return [];
+    }
+
+    return result;
+  }
+
+  /**
    * Is Callback State Available?
    *
    * @param topicData
    * @param oldMessage
    * @param newMessage
    * @returns Promise<boolean>
-   * @protected
    */
-  protected async isCallbackStateAvailable(topicData: TopicData, oldMessage: string | undefined, newMessage: string): Promise<boolean> {
+  public async isCallbackStateAvailable(topicData: TopicData, oldMessage: string | undefined, newMessage: string): Promise<boolean> {
     let result: boolean = false;
 
     if (topicData.topicType === 'commandTopic') {
@@ -182,42 +287,12 @@ class SkillRepository {
    *
    * @param oldMessage
    * @param newMessage
+   * @param deviceType
    * @returns Promise<boolean>
-   * @protected
    */
-  protected async isStateTopicChanged(oldMessage: string | undefined, newMessage: string): Promise<boolean> {
-    const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
-    if (!isStateTopicChecked) {
-      return false;
-    }
-
-    let result: boolean = false;
-
-    let topicStateKeys: string[] = [];
-    const configTopics: MqttTopicInterface[] = await mqttRepository.getConfigTopics();
-
-    for (const configTopic of configTopics) {
-      for (const commandTopic of configTopic.commandTopics) {
-        if (commandTopic.topicStateKeys !== undefined) {
-          topicStateKeys = topicStateKeys.concat(commandTopic.topicStateKeys);
-        }
-      }
-    }
-
-    try {
-      const oldStateTopic = oldMessage ? JSON.parse(oldMessage) : {};
-      const newStateTopic = JSON.parse(newMessage);
-
-      for (const key of [...new Set(topicStateKeys)]) {
-        if (oldStateTopic[key] !== newStateTopic[key]) {
-          result = true;
-        }
-      }
-    } catch (err) {
-      result = false;
-    }
-
-    return result;
+  public async isStateTopicChanged(oldMessage: string | undefined, newMessage: string, deviceType: string = ''): Promise<boolean> {
+    const changes: ChangedCommandTopicInterface[] = await this.getStateTopicChanges(oldMessage, newMessage, deviceType);
+    return changes.length > 0;
   }
 
   /**
@@ -226,9 +301,8 @@ class SkillRepository {
    * @param user
    * @param device
    * @returns Promise<boolean>
-   * @protected
    */
-  protected async isDeviceAvailable(user: UserInterface, device: Device): Promise<boolean> {
+  public async isDeviceAvailable(user: UserInterface, device: Device): Promise<boolean> {
     let result: boolean = false;
 
     const topicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames({
@@ -243,6 +317,46 @@ class SkillRepository {
     const callbackIsSkillDeviceAvailable = configProvider.getConfigOption('callbackIsSkillDeviceAvailable');
     if (typeof callbackIsSkillDeviceAvailable === 'function') {
       result = await callbackIsSkillDeviceAvailable(user, device, topicNames, result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Check if the device has the wrong property with the "event" type.
+   *
+   * @param origDevice
+   * @param oldMessage
+   * @param newMessage
+   * @returns Promise<boolean>
+   * @protected
+   */
+  protected async hasWrongPropertyEvent(origDevice: Device, oldMessage: string | undefined, newMessage: string): Promise<boolean> {
+    let result: boolean = false;
+    const changedTopics: ChangedCommandTopicInterface[] = await this.getStateTopicChanges(oldMessage, newMessage, origDevice.type);
+
+    for (const changedTopic of changedTopics) {
+      if (!changedTopic.property?.type || !changedTopic.property?.stateInstance) {
+        continue;
+      }
+      if (changedTopic.property.type !== 'devices.properties.event') {
+        continue;
+      }
+
+      const property = deviceHelper.getDeviceProperty(origDevice, changedTopic.property.type, changedTopic.property.stateInstance);
+      if (property === undefined) {
+        continue;
+      }
+
+      result = true;
+
+      const parameters = <EventPropertyParameters>property.parameters;
+      for (const event of parameters.events) {
+        if (event.value === changedTopic.mqttValueNew) {
+          result = false;
+          break;
+        }
+      }
     }
 
     return result;
@@ -308,6 +422,15 @@ class SkillRepository {
   protected deleteTempUserDevices(user: UserInterface): void {
     delete this.tempUserDevices[user.id];
   }
+}
+
+/**
+ * Changed MQTT Command Topic Interface.
+ */
+export interface ChangedCommandTopicInterface extends MqttCommandTopicInterface {
+  deviceType: string;
+  mqttValueOld: string | number;
+  mqttValueNew: string | number;
 }
 
 /**

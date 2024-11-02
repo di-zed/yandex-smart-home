@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.5.0] - 2024-11-02
+
+### Added
+
+- Notification about device parameter change.
+
 ## [1.4.6] - 2024-10-29
 
 ### Fixed

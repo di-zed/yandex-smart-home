@@ -3,6 +3,7 @@
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
 import { Capability } from '../devices/capability';
+import { Property } from '../devices/property';
 import { Device } from '../devices/device';
 import { EventProperty } from '../devices/properties/eventProperty';
 import { UserInterface } from '../models/userModel';
@@ -18,9 +19,10 @@ class DeviceHelper {
    *
    * @param user
    * @param device
+   * @param deleteWrongProperties
    * @returns Device
    */
-  public async updateUserDevice(user: UserInterface, device: Device): Promise<Device> {
+  public async updateUserDevice(user: UserInterface, device: Device, deleteWrongProperties: boolean = false): Promise<Device> {
     const deviceClone: Device = JSON.parse(JSON.stringify(device));
     const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
 
@@ -58,6 +60,8 @@ class DeviceHelper {
      * Update Properties.
      */
 
+    const handledProperties = [];
+
     for (const property of deviceClone.properties || []) {
       const propertyTopicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames(<MqttInputTopicNames>{
         user: user,
@@ -84,23 +88,29 @@ class DeviceHelper {
       }
 
       /**
-       * Set the default wrong event value to easily recognize it in the future.
+       * Skip the wrong property if needed.
        */
 
-      if (property.type === 'devices.properties.event') {
-        let isValidEventValue: boolean = false;
+      if (deleteWrongProperties) {
+        if (property.type === 'devices.properties.event') {
+          let isValidEventValue: boolean = false;
 
-        for (const event of (<EventProperty>property).parameters?.events || []) {
-          if (event.value === propertyMessage) {
-            isValidEventValue = true;
+          for (const event of (<EventProperty>property).parameters?.events || []) {
+            if (event.value === property.state!.value) {
+              isValidEventValue = true;
+            }
+          }
+
+          if (!isValidEventValue) {
+            continue;
           }
         }
-
-        if (!isValidEventValue) {
-          property.state!.value = process.env.DEVICE_PROPERTY_EVENT_DEFAULT_VALUE;
-        }
       }
+
+      handledProperties.push(property);
     }
+
+    deviceClone.properties = handledProperties;
 
     return deviceClone;
   }
@@ -119,6 +129,26 @@ class DeviceHelper {
     for (const capability of device.capabilities || []) {
       if (capability.type === capabilityType && capability.state?.instance === capabilityStateInstance) {
         result = <Capability>JSON.parse(JSON.stringify(capability));
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Get Device Property.
+   *
+   * @param device
+   * @param propertyType
+   * @param propertyStateInstance
+   * @returns Property | undefined
+   */
+  public getDeviceProperty(device: Device, propertyType: string, propertyStateInstance: string): Property | undefined {
+    let result: Property | undefined = undefined;
+
+    for (const property of device.properties || []) {
+      if (property.type === propertyType && property.state?.instance === propertyStateInstance) {
+        result = <Property>JSON.parse(JSON.stringify(property));
       }
     }
 

@@ -109,7 +109,7 @@ export default class RestUserController {
         continue;
       }
 
-      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice);
+      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice, true);
 
       payloadDevice.capabilities = [];
       for (const capability of updatedDevice.capabilities || []) {
@@ -121,13 +121,6 @@ export default class RestUserController {
 
       payloadDevice.properties = [];
       for (const property of updatedDevice.properties || []) {
-        // Wrong properties with the "event" type should be removed to avoid errors on the Yandex side.
-        if (property.type === 'devices.properties.event') {
-          if (property.state?.value === process.env.DEVICE_PROPERTY_EVENT_DEFAULT_VALUE) {
-            continue;
-          }
-        }
-
         payloadDevice.properties.push(<Property>{
           type: property.type,
           state: property.state,
