@@ -22,7 +22,7 @@ class DeviceHelper {
    * @param deleteWrongProperties
    * @returns Device
    */
-  public async updateUserDevice(user: UserInterface, device: Device, deleteWrongProperties: boolean = false): Promise<Device> {
+  public async updateUserDevice(user: UserInterface, device: Device, deleteWrongProperties: boolean = true): Promise<Device> {
     const deviceClone: Device = JSON.parse(JSON.stringify(device));
     const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
 

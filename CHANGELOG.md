@@ -1,5 +1,15 @@
 # CHANGE LOG
 
+## [1.5.1] - 2024-11-04
+
+### Added
+
+- New callback methods: callbackSkillState, callbackSkillDiscovery.
+
+### Changed
+
+- Callback Discovery logic.
+
 ## [1.5.0] - 2024-11-02
 
 ### Added

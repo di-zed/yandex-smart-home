@@ -63,18 +63,22 @@ export default class RestUserController {
       request_id: req.requestId,
       payload: {
         user_id: String(req.currentUser.id),
-        devices: JSON.parse(JSON.stringify(devices)),
+        devices: [],
       },
     };
 
-    response.payload.devices.forEach((device: Device): void => {
-      device.capabilities?.forEach((capability: Capability): void => {
+    for (const device of devices) {
+      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, device);
+
+      updatedDevice.capabilities?.forEach((capability: Capability): void => {
         delete capability.state;
       });
-      device.properties?.forEach((property: Property): void => {
+      updatedDevice.properties?.forEach((property: Property): void => {
         delete property.state;
       });
-    });
+
+      response.payload.devices.push(updatedDevice);
+    }
 
     return res.status(200).json(response);
   }
@@ -109,7 +113,7 @@ export default class RestUserController {
         continue;
       }
 
-      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice, true);
+      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice);
 
       payloadDevice.capabilities = [];
       for (const capability of updatedDevice.capabilities || []) {

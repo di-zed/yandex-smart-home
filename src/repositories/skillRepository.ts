@@ -6,7 +6,6 @@ import { RedisClientType } from 'redis';
 import { UserInterface } from '../models/userModel';
 import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
-import { EventPropertyParameters } from '../devices/properties/eventProperty';
 import { Property } from '../devices/property';
 import { ResponsePayload } from '../devices/response';
 import { MqttCommandTopicInterface, MqttTopicInterface } from '../interfaces/mqttInterface';
@@ -67,7 +66,7 @@ class SkillRepository {
       return false;
     }
 
-    const updatedDevice: Device = await deviceHelper.updateUserDevice(user, device, true);
+    const updatedDevice: Device = await deviceHelper.updateUserDevice(user, device);
     const tempTimeoutDevices: TempTimeoutDevices = await this.addTempUserDevice(user, updatedDevice);
 
     return new Promise<boolean>((resolve, reject): void => {
@@ -87,24 +86,19 @@ class SkillRepository {
             headers: { Authorization: `Bearer ${skillToken}` },
           })
           .then((response: RequestOutput): void => {
-            this.logLatestSkillUpdate(user.email, body.payload, response);
-
-            /**
-             * It is important to send a request to Alice in case we receive an invalid value in the "event" property.
-             * These properties in Alice do not matter for stabilizing the situation.
-             * For example, if the device turns over and then is lifted, then we will have to delete the
-             * "event" property (it's implemented in deviceHelper.updateUserDevice).
-             * Accordingly, we need to notify Alice about the change in the set of properties.
-             */
-            const self = this;
-            this.hasWrongPropertyEvent(device, oldMessage, newMessage).then(function (result: boolean) {
-              if (result) {
-                self.callbackDiscovery(user.id).catch((err) => console.log('ERROR! Skill Callback Discovery Request.', err));
-              }
-            });
-
             if (response && response.status === 'ok') {
               this.deleteTempUserDevices(user);
+              this.logLatestSkillUpdate(user.email, body.payload, response);
+
+              if (tempTimeoutDevices.isDeviceParameterChanged) {
+                this.callbackDiscovery(user.id).catch((err) => console.log('ERROR! Skill Callback Discovery Request.', err));
+              }
+
+              const callbackSkillState = configProvider.getConfigOption('callbackSkillState');
+              if (typeof callbackSkillState === 'function') {
+                callbackSkillState(body, tempTimeoutDevices.isDeviceParameterChanged).catch((err: any) => console.log(err));
+              }
+
               return resolve(true);
             } else {
               return reject(response);
@@ -146,6 +140,11 @@ class SkillRepository {
         })
         .then((response: RequestOutput): void => {
           if (response && response.status === 'ok') {
+            const callbackSkillDiscovery = configProvider.getConfigOption('callbackSkillDiscovery');
+            if (typeof callbackSkillDiscovery === 'function') {
+              callbackSkillDiscovery(body).catch((err: any) => console.log(err));
+            }
+
             return resolve(true);
           } else {
             return reject(response);
@@ -325,37 +324,29 @@ class SkillRepository {
   /**
    * Check if the device has the wrong property with the "event" type.
    *
-   * @param origDevice
-   * @param oldMessage
-   * @param newMessage
+   * @param user
+   * @param updatedDevice
    * @returns Promise<boolean>
    * @protected
    */
-  protected async hasWrongPropertyEvent(origDevice: Device, oldMessage: string | undefined, newMessage: string): Promise<boolean> {
+  protected async isDeviceParameterChanged(user: UserInterface, updatedDevice: Device): Promise<boolean> {
+    const latestSkillUpdate: LogUserSkillUpdate | undefined = await this.getLatestSkillUpdate(user.email);
+    if (latestSkillUpdate === undefined) {
+      return true;
+    }
+
     let result: boolean = false;
-    const changedTopics: ChangedCommandTopicInterface[] = await this.getStateTopicChanges(oldMessage, newMessage, origDevice.type);
 
-    for (const changedTopic of changedTopics) {
-      if (!changedTopic.property?.type || !changedTopic.property?.stateInstance) {
-        continue;
-      }
-      if (changedTopic.property.type !== 'devices.properties.event') {
+    for (const latestDevice of latestSkillUpdate.devices) {
+      if (latestDevice.id !== updatedDevice.id) {
         continue;
       }
 
-      const property = deviceHelper.getDeviceProperty(origDevice, changedTopic.property.type, changedTopic.property.stateInstance);
-      if (property === undefined) {
-        continue;
+      if (latestDevice.capabilities?.length !== updatedDevice.capabilities?.length) {
+        result = true;
       }
-
-      result = true;
-
-      const parameters = <EventPropertyParameters>property.parameters;
-      for (const event of parameters.events) {
-        if (event.value === changedTopic.mqttValueNew) {
-          result = false;
-          break;
-        }
+      if (latestDevice.properties?.length !== updatedDevice.properties?.length) {
+        result = true;
       }
     }
 
@@ -372,10 +363,18 @@ class SkillRepository {
    */
   protected async addTempUserDevice(user: UserInterface, updatedDevice: Device): Promise<TempTimeoutDevices> {
     if (this.tempUserDevices[user.id] === undefined) {
-      this.tempUserDevices[user.id] = { timeoutId: undefined, payloadDevices: {} };
+      this.tempUserDevices[user.id] = {
+        timeoutId: undefined,
+        payloadDevices: {},
+        isDeviceParameterChanged: false,
+      };
     }
 
     this.tempUserDevices[user.id].payloadDevices[updatedDevice.id] = this.getPayloadDevice(updatedDevice);
+
+    if (!this.tempUserDevices[user.id].isDeviceParameterChanged) {
+      this.tempUserDevices[user.id].isDeviceParameterChanged = await this.isDeviceParameterChanged(user, updatedDevice);
+    }
 
     return this.tempUserDevices[user.id];
   }
@@ -449,6 +448,7 @@ export type TempPayloadDevices = {
 export type TempTimeoutDevices = {
   timeoutId: any;
   payloadDevices: TempPayloadDevices;
+  isDeviceParameterChanged: boolean;
 };
 
 /**

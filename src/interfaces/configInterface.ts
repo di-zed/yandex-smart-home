@@ -193,6 +193,33 @@ export interface ConfigInterface {
   callbackIsSkillDeviceAvailable?: Function;
 
   /**
+   * Custom callback was called on success notification about the device state change.
+   *
+   * @see SkillRepository.callbackState
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackSkillState: async function (
+   *      body: {[key: string]: any},
+   *      isDeviceParameterChanged: boolean
+   *   ): Promise<boolean> { ... },
+   * });
+   */
+  callbackSkillState?: Function;
+
+  /**
+   * Custom callback was called on success notification about the device parameter change.
+   *
+   * @see SkillRepository.callbackSkillDiscovery
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackSkillDiscovery: async function (
+   *      body: {[key: string]: any}
+   *   ): Promise<boolean> { ... },
+   * });
+   */
+  callbackSkillDiscovery?: Function;
+
+  /**
    * The config file with the user list. Each user should have "id", "email", and "password" fields.
    *
    * @see UserRepository.getConfigUsers
