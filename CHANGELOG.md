@@ -1,5 +1,12 @@
 # CHANGE LOG
 
+## [1.5.2] - 2024-11-09
+
+### Changed
+
+- Yandex Callbacks initialization.
+- Callback methods: callbackSkillState, callbackSkillDiscovery.
+
 ## [1.5.1] - 2024-11-04
 
 ### Added

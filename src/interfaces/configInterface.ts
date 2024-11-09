@@ -199,8 +199,8 @@ export interface ConfigInterface {
    * @example
    * yandexSmartHome(app, {
    *   callbackSkillState: async function (
-   *      body: {[key: string]: any},
-   *      isDeviceParameterChanged: boolean
+   *      response: RequestOutput
+   *      body: {[key: string]: any}
    *   ): Promise<boolean> { ... },
    * });
    */
@@ -213,6 +213,7 @@ export interface ConfigInterface {
    * @example
    * yandexSmartHome(app, {
    *   callbackSkillDiscovery: async function (
+   *      response: RequestOutput
    *      body: {[key: string]: any}
    *   ): Promise<boolean> { ... },
    * });

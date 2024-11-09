@@ -7,7 +7,6 @@ import { UserInterface } from '../models/userModel';
 import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
 import { Property } from '../devices/property';
-import { ResponsePayload } from '../devices/response';
 import { MqttCommandTopicInterface, MqttTopicInterface } from '../interfaces/mqttInterface';
 import mqttRepository, { MqttOutputTopicNames, TopicData } from './mqttRepository';
 import deviceRepository from './deviceRepository';
@@ -38,7 +37,7 @@ class SkillRepository {
    * @param newMessage
    * @returns Promise<boolean>
    */
-  public async callbackState(topic: string, oldMessage: string | undefined, newMessage: string): Promise<boolean> {
+  public async initYandexCallbacks(topic: string, oldMessage: string | undefined, newMessage: string): Promise<boolean> {
     const skillId: string = (process.env.YANDEX_APP_SKILL_ID as string).trim();
     const skillToken: string = (process.env.YANDEX_APP_SKILL_TOKEN as string).trim();
 
@@ -73,52 +72,52 @@ class SkillRepository {
       clearTimeout(tempTimeoutDevices.timeoutId);
 
       tempTimeoutDevices.timeoutId = setTimeout((): void => {
-        const body = {
-          ts: this.getUnixTimestamp(),
-          payload: {
-            user_id: String(user.id),
-            devices: Object.values(tempTimeoutDevices.payloadDevices),
-          },
+        const closureCallbackState = () => {
+          const payloadDevices = Object.values(tempTimeoutDevices.payloadDevices);
+
+          this.callbackState(user.id, payloadDevices)
+            .then((response: RequestOutput | boolean) => {
+              if (typeof response === 'object' && response.status === 'ok') {
+                this.deleteTempUserDevices(user);
+                this.logLatestSkillUpdate(user.email, payloadDevices);
+                return resolve(true);
+              } else {
+                return reject(response);
+              }
+            })
+            .catch((err) => {
+              return reject(err);
+            });
         };
 
-        requestHelper
-          .post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/state`, body, {
-            headers: { Authorization: `Bearer ${skillToken}` },
-          })
-          .then((response: RequestOutput): void => {
-            if (response && response.status === 'ok') {
-              this.deleteTempUserDevices(user);
-              this.logLatestSkillUpdate(user.email, body.payload, response);
-
-              if (tempTimeoutDevices.isDeviceParameterChanged) {
-                this.callbackDiscovery(user.id).catch((err) => console.log('ERROR! Skill Callback Discovery Request.', err));
+        if (tempTimeoutDevices.isDeviceParameterChanged) {
+          this.callbackDiscovery(user.id)
+            .then((response: RequestOutput | boolean) => {
+              if (typeof response === 'object' && response.status === 'ok') {
+                return closureCallbackState();
+              } else {
+                return reject(response);
               }
-
-              const callbackSkillState = configProvider.getConfigOption('callbackSkillState');
-              if (typeof callbackSkillState === 'function') {
-                callbackSkillState(body, tempTimeoutDevices.isDeviceParameterChanged).catch((err: any) => console.log(err));
-              }
-
-              return resolve(true);
-            } else {
-              return reject(response);
-            }
-          })
-          .catch((err) => {
-            console.log('ERROR! Skill Callback State Request.', err);
-          });
+            })
+            .catch((err) => {
+              return reject(err);
+            });
+        } else {
+          return closureCallbackState();
+        }
       }, 5000);
     });
   }
 
   /**
-   * Notification about device parameter change.
-   * https://yandex.ru/dev/dialogs/smart-home/doc/en/reference-alerts/post-skill_id-callback-discovery
+   * Notification about device state change.
+   * https://yandex.ru/dev/dialogs/smart-home/doc/en/reference-alerts/post-skill_id-callback-state
    *
    * @param userId
-   * @returns Promise<boolean>
+   * @param devices
+   * @returns Promise<RequestOutput | boolean>
    */
-  public async callbackDiscovery(userId: string | number): Promise<boolean> {
+  public async callbackState(userId: string | number, devices: Device[]): Promise<RequestOutput | boolean> {
     const skillId: string = (process.env.YANDEX_APP_SKILL_ID as string).trim();
     const skillToken: string = (process.env.YANDEX_APP_SKILL_TOKEN as string).trim();
 
@@ -126,7 +125,47 @@ class SkillRepository {
       return false;
     }
 
-    return new Promise<boolean>((resolve, reject): void => {
+    try {
+      const body = {
+        ts: this.getUnixTimestamp(),
+        payload: {
+          user_id: String(userId),
+          devices: Object.values(devices),
+        },
+      };
+
+      const response: RequestOutput = await requestHelper.post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/state`, body, {
+        headers: { Authorization: `Bearer ${skillToken}` },
+      });
+
+      const callbackSkillState = configProvider.getConfigOption('callbackSkillState');
+      if (typeof callbackSkillState === 'function') {
+        callbackSkillState(response, body).catch((err: any) => console.log('ERROR! Skill Callback State Config Method.', err));
+      }
+
+      return response;
+    } catch (err) {
+      console.log('ERROR! Skill Callback State Request.', err);
+      return false;
+    }
+  }
+
+  /**
+   * Notification about device parameter change.
+   * https://yandex.ru/dev/dialogs/smart-home/doc/en/reference-alerts/post-skill_id-callback-discovery
+   *
+   * @param userId
+   * @returns Promise<RequestOutput | boolean>
+   */
+  public async callbackDiscovery(userId: string | number): Promise<RequestOutput | boolean> {
+    const skillId: string = (process.env.YANDEX_APP_SKILL_ID as string).trim();
+    const skillToken: string = (process.env.YANDEX_APP_SKILL_TOKEN as string).trim();
+
+    if (!skillId || !skillToken) {
+      return false;
+    }
+
+    try {
       const body = {
         ts: this.getUnixTimestamp(),
         payload: {
@@ -134,26 +173,20 @@ class SkillRepository {
         },
       };
 
-      requestHelper
-        .post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/discovery`, body, {
-          headers: { Authorization: `Bearer ${skillToken}` },
-        })
-        .then((response: RequestOutput): void => {
-          if (response && response.status === 'ok') {
-            const callbackSkillDiscovery = configProvider.getConfigOption('callbackSkillDiscovery');
-            if (typeof callbackSkillDiscovery === 'function') {
-              callbackSkillDiscovery(body).catch((err: any) => console.log(err));
-            }
+      const response: RequestOutput = await requestHelper.post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/discovery`, body, {
+        headers: { Authorization: `Bearer ${skillToken}` },
+      });
 
-            return resolve(true);
-          } else {
-            return reject(response);
-          }
-        })
-        .catch((err) => {
-          console.log('ERROR! Skill Callback Discovery Request.', err);
-        });
-    });
+      const callbackSkillDiscovery = configProvider.getConfigOption('callbackSkillDiscovery');
+      if (typeof callbackSkillDiscovery === 'function') {
+        callbackSkillDiscovery(response, body).catch((err: any) => console.log('ERROR! Skill Callback Discovery Config Method.', err));
+      }
+
+      return response;
+    } catch (err) {
+      console.log('ERROR! Skill Callback Discovery Request.', err);
+      return false;
+    }
   }
 
   /**
@@ -169,18 +202,16 @@ class SkillRepository {
    * Log the latest Skill Update for the User.
    *
    * @param email
-   * @param payload
-   * @param response
+   * @param devices
    * @returns Promise<boolean>
    */
-  public async logLatestSkillUpdate(email: string, payload: ResponsePayload, response: RequestOutput): Promise<boolean> {
+  public async logLatestSkillUpdate(email: string, devices: Device[]): Promise<boolean> {
     const redisClient: RedisClientType = await redisProvider.getClientAsync();
     const result: number = await redisClient.hSet(
       'log_user_skill_updates',
       email,
       JSON.stringify(<LogUserSkillUpdate>{
-        devices: payload.devices,
-        response: response,
+        devices: devices,
         updatedAt: this.getUnixTimestamp(),
       }),
     );
@@ -456,7 +487,6 @@ export type TempTimeoutDevices = {
  */
 export type LogUserSkillUpdate = {
   devices: Device[];
-  response: RequestOutput;
   updatedAt: number;
 };
 
