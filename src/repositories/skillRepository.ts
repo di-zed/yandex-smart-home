@@ -87,6 +87,7 @@ class SkillRepository {
                 // via the Rest User controller (devices action) callback function.
                 return resolve(true);
               } else {
+                console.log('ERROR! Init Yandex Callbacks, parameter changed.', { response });
                 return reject(response);
               }
             })
@@ -100,6 +101,7 @@ class SkillRepository {
               if (typeof response === 'object' && response.status === 'ok') {
                 return resolve(true);
               } else {
+                console.log('ERROR! Init Yandex Callbacks, parameter NOT changed.', { response });
                 return reject(response);
               }
             })
@@ -107,7 +109,7 @@ class SkillRepository {
               return reject(err);
             });
         }
-      }, 5000);
+      }, 3000);
     });
   }
 

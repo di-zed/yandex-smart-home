@@ -58,6 +58,7 @@ export default class RestUserController {
    */
   public async devices(req: Request, res: Response): Promise<Response> {
     const devices: Device[] = await deviceRepository.getUserDevices(req.currentUser.id);
+    const updatedDevices: Device[] = [];
 
     const response: DevicesResponse = {
       request_id: req.requestId,
@@ -69,6 +70,7 @@ export default class RestUserController {
 
     for (const device of devices) {
       const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, device);
+      updatedDevices.push(structuredClone(updatedDevice));
 
       updatedDevice.capabilities?.forEach((capability: Capability): void => {
         delete capability.state;
@@ -82,7 +84,12 @@ export default class RestUserController {
 
     const callbackRestUserDevicesAction = configProvider.getConfigOption('callbackRestUserDevicesAction');
     if (typeof callbackRestUserDevicesAction === 'function') {
-      await callbackRestUserDevicesAction(req.currentUser, response.payload.devices);
+      // The callback must be executed after Yandex receives a response from the server.
+      setTimeout((): void => {
+        callbackRestUserDevicesAction(req.currentUser, updatedDevices).catch((err: any) => {
+          console.log('ERROR! Rest User Devices callback.', { err, user: req.currentUser, devices: updatedDevices });
+        });
+      }, 1000);
     }
 
     return res.status(200).json(response);

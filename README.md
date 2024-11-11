@@ -82,7 +82,21 @@ The essence of the module is that upon command, for example, "Alice, turn on the
      });
     ```
    The full list of parameters can be found in the file *[src/interfaces/configInterface.ts](https://github.com/di-zed/yandex-smart-home/blob/main/src/interfaces/configInterface.ts)* .
-
+6. To automatically notify Yandex about changes in device parameters, be sure to use the "callbackRestUserDevicesAction" parameter from "configInterface".
+   ```typescript
+   import express, { Application } from 'express';
+   import yandexSmartHome from '@di-zed/yandex-smart-home';
+   import yandexSkillRepository from '@di-zed/yandex-smart-home/dist/repositories/skillRepository';
+   
+   const app: Application = express();
+   
+   yandexSmartHome(app, {
+      // ...
+      callbackRestUserDevicesAction: yandexSkillRepository.execTempUserStateCallback.bind(yandexSkillRepository),
+      // ...
+    });
+   ```
+   
 <a name="implemented_auth_en"><h3>Authorization in the skill.</h3></a>
 
 - How authorization works: [/auth/login, /auth/token](https://yandex.ru/dev/dialogs/alice/doc/auth/how-it-works.html?lang=en).
@@ -207,6 +221,20 @@ As an alternative, [special hooks](https://github.com/di-zed/yandex-smart-home/b
     });
    ```
    С полным списком параметров можно ознакомиться в файле *[src/interfaces/configInterface.ts](https://github.com/di-zed/yandex-smart-home/blob/main/src/interfaces/configInterface.ts)*.
+6. Для автоматического уведомления Яндекса об изменении параметров устройств, обязательно используйте "callbackRestUserDevicesAction" параметр из "configInterface".
+   ```typescript
+   import express, { Application } from 'express';
+   import yandexSmartHome from '@di-zed/yandex-smart-home';
+   import yandexSkillRepository from '@di-zed/yandex-smart-home/dist/repositories/skillRepository';
+   
+   const app: Application = express();
+   
+   yandexSmartHome(app, {
+      // ...
+      callbackRestUserDevicesAction: yandexSkillRepository.execTempUserStateCallback.bind(yandexSkillRepository),
+      // ...
+    });
+   ```
 
 <a name="implemented_auth_ru"><h3>Авторизация в навыке.</h3></a>
 
