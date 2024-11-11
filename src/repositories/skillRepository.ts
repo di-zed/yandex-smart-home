@@ -29,8 +29,14 @@ class SkillRepository {
   protected tempUserDevices: TempUserDevices = {};
 
   /**
-   * Notification about device state change.
-   * https://yandex.ru/dev/dialogs/smart-home/doc/en/reference-alerts/post-skill_id-callback-state
+   * Temporary User State Callbacks.
+   *
+   * @protected
+   */
+  protected tempUserStateCallbacks: TempUserStateCallbacks = {};
+
+  /**
+   * Yandex Callbacks initialization.
    *
    * @param topic
    * @param oldMessage
@@ -72,14 +78,13 @@ class SkillRepository {
       clearTimeout(tempTimeoutDevices.timeoutId);
 
       tempTimeoutDevices.timeoutId = setTimeout((): void => {
-        const closureCallbackState = () => {
-          const payloadDevices = Object.values(tempTimeoutDevices.payloadDevices);
-
-          this.callbackState(user.id, payloadDevices)
+        if (tempTimeoutDevices.isDeviceParameterChanged) {
+          this.callbackDiscovery(user.id)
             .then((response: RequestOutput | boolean) => {
               if (typeof response === 'object' && response.status === 'ok') {
-                this.deleteTempUserDevices(user);
-                this.logLatestSkillUpdate(user.email, payloadDevices);
+                this.tempUserStateCallbacks[user.id] = true;
+                // The State Callback will be executed later
+                // via the Rest User controller (devices action) callback function.
                 return resolve(true);
               } else {
                 return reject(response);
@@ -88,13 +93,12 @@ class SkillRepository {
             .catch((err) => {
               return reject(err);
             });
-        };
-
-        if (tempTimeoutDevices.isDeviceParameterChanged) {
-          this.callbackDiscovery(user.id)
+        } else {
+          this.tempUserStateCallbacks[user.id] = true;
+          this.execTempUserStateCallback(user, Object.values(tempTimeoutDevices.payloadDevices))
             .then((response: RequestOutput | boolean) => {
               if (typeof response === 'object' && response.status === 'ok') {
-                return closureCallbackState();
+                return resolve(true);
               } else {
                 return reject(response);
               }
@@ -102,11 +106,38 @@ class SkillRepository {
             .catch((err) => {
               return reject(err);
             });
-        } else {
-          return closureCallbackState();
         }
       }, 5000);
     });
+  }
+
+  /**
+   * Execute temporary user state callback.
+   *
+   * @param user
+   * @param devices
+   * @returns Promise<RequestOutput | boolean>
+   */
+  public async execTempUserStateCallback(user: UserInterface, devices: Device[]): Promise<RequestOutput | boolean> {
+    if (!this.tempUserStateCallbacks[user.id]) {
+      return false;
+    }
+
+    try {
+      const response: RequestOutput | boolean = await this.callbackState(user.id, devices);
+
+      if (typeof response === 'object' && response.status === 'ok') {
+        delete this.tempUserStateCallbacks[user.id];
+
+        this.deleteTempUserDevices(user);
+        await this.logLatestSkillUpdate(user.email, devices);
+      }
+
+      return response;
+    } catch (err) {
+      console.log('ERROR! Execute temporary user state callback.', err);
+      return false;
+    }
   }
 
   /**
@@ -125,12 +156,17 @@ class SkillRepository {
       return false;
     }
 
+    const payloadDevices: Device[] = [];
+    for (const device of devices) {
+      payloadDevices.push(this.getPayloadDevice(device));
+    }
+
     try {
       const body = {
         ts: this.getUnixTimestamp(),
         payload: {
           user_id: String(userId),
-          devices: Object.values(devices),
+          devices: payloadDevices,
         },
       };
 
@@ -413,22 +449,22 @@ class SkillRepository {
   /**
    * Get Payload Device.
    *
-   * @param updatedDevice
+   * @param device
    * @returns Device
    * @protected
    */
-  protected getPayloadDevice(updatedDevice: Device): Device {
+  protected getPayloadDevice(device: Device): Device {
     const capabilities: Capability[] = [];
     const properties: Property[] = [];
 
-    for (const capability of updatedDevice.capabilities || []) {
+    for (const capability of device.capabilities || []) {
       capabilities.push({
         type: capability.type,
         state: capability.state,
       });
     }
 
-    for (const property of updatedDevice.properties || []) {
+    for (const property of device.properties || []) {
       properties.push({
         type: property.type,
         state: property.state,
@@ -436,7 +472,7 @@ class SkillRepository {
     }
 
     return <Device>{
-      id: updatedDevice.id,
+      id: device.id,
       capabilities: capabilities,
       properties: properties,
     };
@@ -498,6 +534,16 @@ export type TempUserDevices = {
    * User ID => Timeout Devices.
    */
   [key: string | number]: TempTimeoutDevices;
+};
+
+/**
+ * Temporary User State Callbacks Type.
+ */
+export type TempUserStateCallbacks = {
+  /**
+   * User ID => True/False.
+   */
+  [key: string | number]: boolean;
 };
 
 export default new SkillRepository();

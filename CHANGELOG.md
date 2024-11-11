@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.5.3] - 2024-11-11
+
+### Added
+
+- New callback methods: callbackRestUserDevicesAction.
+
 ## [1.5.2] - 2024-11-09
 
 ### Changed

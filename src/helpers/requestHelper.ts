@@ -57,7 +57,7 @@ class RequestHelper {
           try {
             result = JSON.parse(chunk.toString());
           } catch (err) {
-            console.log('ERROR! Request Data.', chunk);
+            console.log('ERROR! Request Data.', err);
             return reject('Error while parsing data!');
           }
         });

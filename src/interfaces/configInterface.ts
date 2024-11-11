@@ -128,6 +128,17 @@ export interface ConfigInterface {
   callbackRestUserUnlinkAction?: Function;
 
   /**
+   * Additional actions when returning a list of devices.
+   *
+   * @see RestUserController.devices
+   * @example
+   * yandexSmartHome(app, {
+   *   callbackRestUserDevicesAction: async function (user: UserInterface, payloadDevices: Device[]): Promise<void> { ... },
+   * });
+   */
+  callbackRestUserDevicesAction?: Function;
+
+  /**
    * A callback method that can be used when Redis is Ready.
    *
    * @see RedisProvider.connect

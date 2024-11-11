@@ -80,6 +80,11 @@ export default class RestUserController {
       response.payload.devices.push(updatedDevice);
     }
 
+    const callbackRestUserDevicesAction = configProvider.getConfigOption('callbackRestUserDevicesAction');
+    if (typeof callbackRestUserDevicesAction === 'function') {
+      await callbackRestUserDevicesAction(req.currentUser, response.payload.devices);
+    }
+
     return res.status(200).json(response);
   }
 
