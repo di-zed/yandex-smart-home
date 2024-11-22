@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.5.5] - 2024-11-22
+
+### Added
+
+- Lifetime for the Available and State topics.
+
 ## [1.5.4] - 2024-11-11
 
 ### Changed

@@ -8,7 +8,7 @@ import { IClientPublishOptions, ISubscriptionGrant } from 'mqtt/src/lib/client';
 import { Packet } from 'mqtt-packet';
 import { MqttInterface } from '../interfaces/mqttInterface';
 import { RedisClientType } from 'redis';
-import mqttRepository from '../repositories/mqttRepository';
+import mqttRepository, { MqttTopicTypes } from '../repositories/mqttRepository';
 import configProvider from './configProvider';
 import redisProvider from './redisProvider';
 
@@ -151,10 +151,27 @@ export class MqttProvider {
     const redisClient: RedisClientType = await redisProvider.getClientAsync();
     const result: number = await redisClient.hSet('topics', topic, message);
 
-    const cacheLifetimeSec: number = parseInt(process.env.TOPIC_COMMAND_CACHE_LIFETIME_SEC as string, 10);
-    if (!isNaN(cacheLifetimeSec)) {
-      if (await mqttRepository.isTopicType(topic, 'commandTopic')) {
-        await redisClient.sendCommand(['HEXPIRE', 'topics', String(cacheLifetimeSec), 'FIELDS', '1', topic]);
+    const topicLifetimes: { topicType: MqttTopicTypes; lifetimeSec: number }[] = [
+      {
+        topicType: 'availableTopic',
+        lifetimeSec: parseInt(process.env.TOPIC_AVAILABLE_CACHE_LIFETIME_SEC as string, 10),
+      },
+      {
+        topicType: 'commandTopic',
+        lifetimeSec: parseInt(process.env.TOPIC_COMMAND_CACHE_LIFETIME_SEC as string, 10),
+      },
+      {
+        topicType: 'stateTopic',
+        lifetimeSec: parseInt(process.env.TOPIC_STATE_CACHE_LIFETIME_SEC as string, 10),
+      },
+    ];
+
+    for (const topicLifetime of topicLifetimes) {
+      if (!isNaN(topicLifetime.lifetimeSec)) {
+        if (await mqttRepository.isTopicType(topic, topicLifetime.topicType)) {
+          await redisClient.sendCommand(['HEXPIRE', 'topics', String(topicLifetime.lifetimeSec), 'FIELDS', '1', topic]);
+          break;
+        }
       }
     }
 
