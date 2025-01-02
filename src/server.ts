@@ -9,7 +9,7 @@ import express, { Application } from 'express';
 import fs from 'fs';
 import https from 'https';
 import yandexSmartHome from './index';
-import skillRepository from './repositories/skillRepository';
+import skillService from './services/skillService';
 
 process.on('unhandledRejection', (err: any) => {
   console.log('ERROR! Unhandled Rejection! Shutting Down!');
@@ -25,7 +25,7 @@ process.on('uncaughtException', (err: any) => {
 
 const app: Application = express();
 yandexSmartHome(app, {
-  callbackRestUserDevicesAction: skillRepository.execTempUserStateCallback.bind(skillRepository),
+  callbackRestUserDevicesAction: skillService.execTempUserStateCallback.bind(skillService),
 });
 
 try {

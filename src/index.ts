@@ -13,7 +13,8 @@ import hpp from 'hpp';
 import configProvider from './providers/configProvider';
 import mqttProvider from './providers/mqttProvider';
 import redisProvider from './providers/redisProvider';
-import skillRepository from './repositories/skillRepository';
+import topicService from './services/topicService';
+import skillService from './services/skillService';
 import Routes from './routes';
 import { ConfigInterface } from './interfaces/configInterface';
 import { ISubscriptionGrant } from 'mqtt/src/lib/client';
@@ -127,11 +128,11 @@ class YandexSmartHome {
       mqttProvider
         .subscribe((topic: string, newMessage: string): void => {
           try {
-            mqttProvider.getTopicMessage(topic).then((oldMessage: string | undefined): void => {
+            topicService.getTopicMessage(topic).then((oldMessage: string | undefined): void => {
               if (oldMessage !== newMessage) {
-                mqttProvider.setTopicMessage(topic, newMessage).then((): void => {
+                topicService.setTopicMessage(topic, newMessage).then((): void => {
                   mqttProvider.listenTopic(topic, oldMessage, newMessage);
-                  skillRepository.initYandexCallbacks(topic, oldMessage, newMessage).catch((err) => {
+                  skillService.initYandexCallbacks(topic, oldMessage, newMessage).catch((err) => {
                     console.log('ERROR! Init Yandex Callbacks.', { err, topic, oldMessage, newMessage });
                   });
                 });

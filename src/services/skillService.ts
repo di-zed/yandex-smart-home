@@ -8,19 +8,20 @@ import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
 import { Property } from '../devices/property';
 import { MqttCommandTopicInterface, MqttTopicInterface } from '../interfaces/mqttInterface';
-import mqttRepository, { MqttOutputTopicNames, TopicData } from './mqttRepository';
-import deviceRepository from './deviceRepository';
-import userRepository from './userRepository';
+import mqttRepository from '../repositories/mqttRepository';
+import userRepository from '../repositories/userRepository';
 import deviceHelper from '../helpers/deviceHelper';
-import requestHelper, { RequestOutput } from '../helpers/requestHelper';
-import mqttProvider from '../providers/mqttProvider';
 import configProvider from '../providers/configProvider';
+import httpProvider, { RequestOutput } from '../providers/httpProvider';
 import redisProvider from '../providers/redisProvider';
+import deviceService from './deviceService';
+import mqttService, { MqttOutputTopicNames, TopicData } from './mqttService';
+import topicService from './topicService';
 
 /**
- * Skill Repository.
+ * Skill Service.
  */
-class SkillRepository {
+class SkillService {
   /**
    * Temporary User Devices.
    *
@@ -51,7 +52,7 @@ class SkillRepository {
       return false;
     }
 
-    const topicData: TopicData | undefined = await mqttRepository.getTopicData(topic);
+    const topicData: TopicData | undefined = await mqttService.getTopicData(topic);
     if (topicData === undefined) {
       return false;
     }
@@ -62,7 +63,7 @@ class SkillRepository {
 
     const user: UserInterface = await userRepository.getUserByNameOrEmail(topicData.userName);
 
-    const device: Device | undefined = await deviceRepository.getUserDeviceById(user.id, topicData.deviceId);
+    const device: Device | undefined = await deviceService.getUserDeviceById(user.id, topicData.deviceId);
     if (device === undefined) {
       return false;
     }
@@ -172,7 +173,7 @@ class SkillRepository {
         },
       };
 
-      const response: RequestOutput = await requestHelper.post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/state`, body, {
+      const response: RequestOutput = await httpProvider.post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/state`, body, {
         headers: { Authorization: `Bearer ${skillToken}` },
       });
 
@@ -211,7 +212,7 @@ class SkillRepository {
         },
       };
 
-      const response: RequestOutput = await requestHelper.post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/discovery`, body, {
+      const response: RequestOutput = await httpProvider.post(`https://dialogs.yandex.net/api/v1/skills/${skillId}/callback/discovery`, body, {
         headers: { Authorization: `Bearer ${skillToken}` },
       });
 
@@ -373,13 +374,13 @@ class SkillRepository {
   public async isDeviceAvailable(user: UserInterface, device: Device): Promise<boolean> {
     let result: boolean = false;
 
-    const topicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames({
+    const topicNames: MqttOutputTopicNames = await mqttService.getTopicNames({
       user: user,
       deviceId: device.id,
     });
 
     if (topicNames.availableTopic) {
-      result = (await mqttProvider.getTopicMessage(topicNames.availableTopic)) !== 'offline';
+      result = (await topicService.getTopicMessage(topicNames.availableTopic)) !== 'offline';
     }
 
     const callbackIsSkillDeviceAvailable = configProvider.getConfigOption('callbackIsSkillDeviceAvailable');
@@ -548,4 +549,4 @@ export type TempUserStateCallbacks = {
   [key: string | number]: boolean;
 };
 
-export default new SkillRepository();
+export default new SkillService();

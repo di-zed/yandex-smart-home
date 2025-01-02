@@ -2,9 +2,9 @@
  * @author DiZed Team
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
+import i18n from 'i18n';
 import { ClientInterface } from '../models/clientModel';
 import configProvider from '../providers/configProvider';
-import i18n from 'i18n';
 
 /**
  * Client Repository.

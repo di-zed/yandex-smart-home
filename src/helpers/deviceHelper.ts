@@ -7,8 +7,8 @@ import { Property } from '../devices/property';
 import { Device } from '../devices/device';
 import { EventProperty } from '../devices/properties/eventProperty';
 import { UserInterface } from '../models/userModel';
-import mqttRepository, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../repositories/mqttRepository';
-import mqttProvider from '../providers/mqttProvider';
+import mqttService, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../services/mqttService';
+import topicService from '../services/topicService';
 
 /**
  * Device Helper.
@@ -31,7 +31,7 @@ class DeviceHelper {
      */
 
     for (const capability of deviceClone.capabilities || []) {
-      const capabilityTopicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames(<MqttInputTopicNames>{
+      const capabilityTopicNames: MqttOutputTopicNames = await mqttService.getTopicNames(<MqttInputTopicNames>{
         user: user,
         deviceId: device.id,
         capabilityType: capability.type,
@@ -40,19 +40,19 @@ class DeviceHelper {
 
       let capabilityTopicData: CommandTopicData | undefined = undefined;
       if (deviceClone.type) {
-        capabilityTopicData = await mqttRepository.getCommandTopicData(capabilityTopicNames.commandTopic, deviceClone.type, {
+        capabilityTopicData = await mqttService.getCommandTopicData(capabilityTopicNames.commandTopic, deviceClone.type, {
           capabilityType: capability.type,
           capabilityStateInstance: capability.state?.instance,
         });
       }
 
-      let capabilityMessage: string | undefined = await mqttProvider.getTopicMessage(capabilityTopicNames.commandTopic);
+      let capabilityMessage: string | undefined = await topicService.getTopicMessage(capabilityTopicNames.commandTopic);
       if (capabilityMessage === undefined && capabilityTopicData !== undefined && isStateTopicChecked) {
-        capabilityMessage = await mqttProvider.getStateTopicValueByKey(capabilityTopicNames.stateTopic, capabilityTopicData.topicStateKeys);
+        capabilityMessage = await topicService.getStateTopicValueByKey(capabilityTopicNames.stateTopic, capabilityTopicData.topicStateKeys);
       }
 
       if (capabilityMessage !== undefined) {
-        capability.state!.value = await mqttRepository.convertMqttMessageToAliceValue(capabilityMessage, capabilityTopicData);
+        capability.state!.value = await topicService.convertMqttMessageToAliceValue(capabilityMessage, capabilityTopicData);
       }
     }
 
@@ -63,7 +63,7 @@ class DeviceHelper {
     const handledProperties = [];
 
     for (const property of deviceClone.properties || []) {
-      const propertyTopicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames(<MqttInputTopicNames>{
+      const propertyTopicNames: MqttOutputTopicNames = await mqttService.getTopicNames(<MqttInputTopicNames>{
         user: user,
         deviceId: device.id,
         propertyType: property.type,
@@ -72,19 +72,19 @@ class DeviceHelper {
 
       let propertyTopicData: CommandTopicData | undefined = undefined;
       if (deviceClone.type) {
-        propertyTopicData = await mqttRepository.getCommandTopicData(propertyTopicNames.commandTopic, deviceClone.type, {
+        propertyTopicData = await mqttService.getCommandTopicData(propertyTopicNames.commandTopic, deviceClone.type, {
           propertyType: property.type,
           propertyStateInstance: property.state?.instance,
         });
       }
 
-      let propertyMessage: string | undefined = await mqttProvider.getTopicMessage(propertyTopicNames.commandTopic);
+      let propertyMessage: string | undefined = await topicService.getTopicMessage(propertyTopicNames.commandTopic);
       if (propertyMessage === undefined && propertyTopicData !== undefined && isStateTopicChecked) {
-        propertyMessage = await mqttProvider.getStateTopicValueByKey(propertyTopicNames.stateTopic, propertyTopicData.topicStateKeys);
+        propertyMessage = await topicService.getStateTopicValueByKey(propertyTopicNames.stateTopic, propertyTopicData.topicStateKeys);
       }
 
       if (propertyMessage !== undefined) {
-        property.state!.value = await mqttRepository.convertMqttMessageToAliceValue(propertyMessage, propertyTopicData);
+        property.state!.value = await topicService.convertMqttMessageToAliceValue(propertyMessage, propertyTopicData);
       }
 
       /**

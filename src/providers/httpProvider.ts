@@ -8,7 +8,7 @@ import https from 'https';
 /**
  * Request Helper.
  */
-class RequestHelper {
+class HttpProvider {
   /**
    * Make a Request.
    *
@@ -55,9 +55,8 @@ class RequestHelper {
 
         response.on('data', (chunk): void => {
           try {
-            result = JSON.parse(chunk.toString());
+            result = JSON.parse(chunk.toString()) || undefined;
           } catch (err) {
-            console.log('ERROR! Request Data.', err);
             return reject('Error while parsing data!');
           }
         });
@@ -71,7 +70,6 @@ class RequestHelper {
       });
 
       request.on('error', (error: Error) => {
-        console.log('ERROR! Request Error.', error);
         return reject(error);
       });
 
@@ -123,4 +121,4 @@ export type RequestOutput = {
   [key: string]: any;
 };
 
-export default new RequestHelper();
+export default new HttpProvider();

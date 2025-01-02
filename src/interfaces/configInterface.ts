@@ -78,7 +78,7 @@ export interface ConfigInterface {
   /**
    * The custom function to get the User Devices.
    *
-   * @see DeviceRepository.getUserDevices
+   * @see DeviceService.getUserDevices
    * @example
    * yandexSmartHome(app, {
    *   functionGetUserDevices: async function (user: UserInterface, configDevices: Device[]): Promise<Device[]> { ... },
@@ -89,7 +89,7 @@ export interface ConfigInterface {
   /**
    * Adjust the MQTT Message if needed.
    *
-   * @see MqttRepository.convertAliceValueToMqttMessage
+   * @see TopicService.convertAliceValueToMqttMessage
    * @example
    * yandexSmartHome(app, {
    *   functionConvertAliceValueToMqttMessage: async function (
@@ -104,7 +104,7 @@ export interface ConfigInterface {
   /**
    * Adjust the Alice Value if needed.
    *
-   * @see MqttRepository.convertMqttMessageToAliceValue
+   * @see TopicService.convertMqttMessageToAliceValue
    * @example
    * yandexSmartHome(app, {
    *   functionConvertMqttMessageToAliceValue: async function (
@@ -174,7 +174,7 @@ export interface ConfigInterface {
   /**
    * Additional checks that the Skill Callback State can be sent to the Yandex server.
    *
-   * @see SkillRepository.isCallbackStateAvailable
+   * @see SkillService.isCallbackStateAvailable
    * @example
    * yandexSmartHome(app, {
    *   callbackIsSkillCallbackStateAvailable: async function (
@@ -190,7 +190,7 @@ export interface ConfigInterface {
   /**
    * Additional checks that the Skill Device can be sent to the Yandex server.
    *
-   * @see SkillRepository.isDeviceAvailable
+   * @see SkillService.isDeviceAvailable
    * @example
    * yandexSmartHome(app, {
    *   callbackIsSkillDeviceAvailable: async function (
@@ -206,7 +206,7 @@ export interface ConfigInterface {
   /**
    * Custom callback was called on success notification about the device state change.
    *
-   * @see SkillRepository.callbackState
+   * @see SkillService.callbackState
    * @example
    * yandexSmartHome(app, {
    *   callbackSkillState: async function (
@@ -220,7 +220,7 @@ export interface ConfigInterface {
   /**
    * Custom callback was called on success notification about the device parameter change.
    *
-   * @see SkillRepository.callbackSkillDiscovery
+   * @see SkillService.callbackSkillDiscovery
    * @example
    * yandexSmartHome(app, {
    *   callbackSkillDiscovery: async function (

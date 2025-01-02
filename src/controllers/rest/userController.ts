@@ -6,8 +6,9 @@ import { NextFunction, Request, Response } from 'express';
 import { DevicesResponse } from '../../devices/response';
 import configProvider from '../../providers/configProvider';
 import mqttProvider from '../../providers/mqttProvider';
-import deviceRepository from '../../repositories/deviceRepository';
-import mqttRepository, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../../repositories/mqttRepository';
+import deviceService from '../../services/deviceService';
+import mqttService, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../../services/mqttService';
+import topicService from '../../services/topicService';
 import deviceHelper from '../../helpers/deviceHelper';
 import { Device } from '../../devices/device';
 import { Capability, CapabilityState, CapabilityStateActionResult } from '../../devices/capability';
@@ -57,7 +58,7 @@ export default class RestUserController {
    * @returns Response
    */
   public async devices(req: Request, res: Response): Promise<Response> {
-    const devices: Device[] = await deviceRepository.getUserDevices(req.currentUser.id);
+    const devices: Device[] = await deviceService.getUserDevices(req.currentUser.id);
     const updatedDevices: Device[] = [];
 
     const response: DevicesResponse = {
@@ -118,7 +119,7 @@ export default class RestUserController {
     };
 
     for (const payloadDevice of <Device[]>response.payload.devices) {
-      const userDevice: Device | undefined = await deviceRepository.getUserDeviceById(req.currentUser.id, payloadDevice.id);
+      const userDevice: Device | undefined = await deviceService.getUserDeviceById(req.currentUser.id, payloadDevice.id);
       if (userDevice === undefined) {
         payloadDevice.error_code = 'DEVICE_NOT_FOUND';
         payloadDevice.error_message = res.__('The device "%s" can not be found.', payloadDevice.id);
@@ -170,7 +171,7 @@ export default class RestUserController {
     };
 
     for (const payloadDevice of <Device[]>response.payload.devices) {
-      const userDevice: Device | undefined = await deviceRepository.getUserDeviceById(req.currentUser.id, payloadDevice.id);
+      const userDevice: Device | undefined = await deviceService.getUserDeviceById(req.currentUser.id, payloadDevice.id);
       if (userDevice === undefined) {
         continue;
       }
@@ -180,7 +181,7 @@ export default class RestUserController {
 
       for (const payloadCapability of payloadCapabilities) {
         const capabilityState: CapabilityState = <CapabilityState>payloadCapability.state;
-        const topicNames: MqttOutputTopicNames = await mqttRepository.getTopicNames(<MqttInputTopicNames>{
+        const topicNames: MqttOutputTopicNames = await mqttService.getTopicNames(<MqttInputTopicNames>{
           user: req.currentUser,
           deviceId: userDevice.id,
           capabilityType: payloadCapability.type,
@@ -199,7 +200,7 @@ export default class RestUserController {
 
             let topicData: CommandTopicData | undefined = undefined;
             if (updatedDevice.type) {
-              topicData = await mqttRepository.getCommandTopicData(topicNames.commandTopic, updatedDevice.type, {
+              topicData = await mqttService.getCommandTopicData(topicNames.commandTopic, updatedDevice.type, {
                 capabilityType: payloadCapability.type,
                 capabilityStateInstance: capabilityState.instance,
               });
@@ -219,7 +220,7 @@ export default class RestUserController {
               }
             }
 
-            await mqttProvider.publish(topicNames.commandTopic, await mqttRepository.convertAliceValueToMqttMessage(value, topicData));
+            await mqttProvider.publish(topicNames.commandTopic, await topicService.convertAliceValueToMqttMessage(value, topicData));
 
             actionResult = { status: 'DONE' };
           }
