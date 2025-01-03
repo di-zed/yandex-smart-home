@@ -132,8 +132,8 @@ class YandexSmartHome {
               if (oldMessage !== newMessage) {
                 topicService.setTopicMessage(topic, newMessage).then((): void => {
                   mqttProvider.listenTopic(topic, oldMessage, newMessage);
-                  skillService.initYandexCallbacks(topic, oldMessage, newMessage).catch((err) => {
-                    console.log('ERROR! Init Yandex Callbacks.', { err, topic, oldMessage, newMessage });
+                  skillService.initYandexCallbacks(topic, oldMessage, newMessage).catch((err): void => {
+                    console.log('ERROR! Init Yandex Callbacks.', { err, topic /*, oldMessage, newMessage*/ });
                   });
                 });
               }

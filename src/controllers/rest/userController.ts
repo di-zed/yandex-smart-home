@@ -70,7 +70,7 @@ export default class RestUserController {
     };
 
     for (const device of devices) {
-      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, device);
+      const updatedDevice: Device = await deviceService.updateUserDevice(req.currentUser, device);
       updatedDevices.push(structuredClone(updatedDevice));
 
       updatedDevice.capabilities?.forEach((capability: Capability): void => {
@@ -126,7 +126,13 @@ export default class RestUserController {
         continue;
       }
 
-      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice);
+      const updatedDevice: Device = await deviceService.updateUserDevice(req.currentUser, userDevice);
+
+      if (!(await deviceService.isDeviceAvailable(req.currentUser, userDevice))) {
+        payloadDevice.error_code = 'DEVICE_UNREACHABLE';
+        payloadDevice.error_message = res.__('The device "%s" is disconnected from power or the Internet.', payloadDevice.id);
+        continue;
+      }
 
       payloadDevice.capabilities = [];
       for (const capability of updatedDevice.capabilities || []) {
@@ -172,12 +178,12 @@ export default class RestUserController {
 
     for (const payloadDevice of <Device[]>response.payload.devices) {
       const userDevice: Device | undefined = await deviceService.getUserDeviceById(req.currentUser.id, payloadDevice.id);
-      if (userDevice === undefined) {
+      if (userDevice === undefined || !(await deviceService.isDeviceAvailable(req.currentUser, userDevice))) {
         continue;
       }
 
       const payloadCapabilities: Capability[] = payloadDevice.capabilities || [];
-      const updatedDevice: Device = await deviceHelper.updateUserDevice(req.currentUser, userDevice);
+      const updatedDevice: Device = await deviceService.updateUserDevice(req.currentUser, userDevice);
 
       for (const payloadCapability of payloadCapabilities) {
         const capabilityState: CapabilityState = <CapabilityState>payloadCapability.state;

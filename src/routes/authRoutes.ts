@@ -5,6 +5,7 @@
 import { Router } from 'express';
 import catchAsync from '../errors/catchAsync';
 import AuthController from '../controllers/authController';
+
 /**
  * Auth Routes.
  */

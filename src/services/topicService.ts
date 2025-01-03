@@ -3,11 +3,24 @@
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
 import { RedisClientType } from 'redis';
+import { MqttCommandTopicInterface, MqttTopicInterface } from '../interfaces/mqttInterface';
 import mqttService, { CommandTopicData, MqttTopicTypes } from './mqttService';
 import configProvider from '../providers/configProvider';
 import redisProvider from '../providers/redisProvider';
+import mqttRepository from '../repositories/mqttRepository';
+import topicExpiredEvent from '../events/topicExpiredEvent';
 
+/**
+ * Topic Service.
+ */
 class TopicService {
+  /**
+   * The Topic Timeout IDs.
+   *
+   * @protected
+   */
+  protected topicTimeoutIds: TopicTimeoutIds = {};
+
   /**
    * Prepare Message for the MQTT Topic.
    *
@@ -121,6 +134,23 @@ class TopicService {
       if (!isNaN(topicLifetime.lifetimeSec)) {
         if (await mqttService.isTopicType(topic, topicLifetime.topicType)) {
           await redisClient.sendCommand(['HEXPIRE', 'topics', String(topicLifetime.lifetimeSec), 'FIELDS', '1', topic]);
+
+          // Event when the topic has disappeared from the Redis storage:
+
+          const self = this;
+          clearTimeout(this.topicTimeoutIds[topic]);
+
+          this.topicTimeoutIds[topic] = setTimeout(
+            function (): void {
+              delete self.topicTimeoutIds[topic];
+
+              topicExpiredEvent.execute(topic, message).catch((err): void => {
+                console.log('ERROR! Topic Expired Event.', err instanceof Error ? err.message : err);
+              });
+            },
+            topicLifetime.lifetimeSec * 1000 * 1.5,
+          );
+
           break;
         }
       }
@@ -175,6 +205,73 @@ class TopicService {
 
     return result;
   }
+
+  /**
+   * Get State Topic changes.
+   *
+   * @param oldMessage
+   * @param newMessage
+   * @param deviceType
+   * @returns Promise<ChangedCommandTopicInterface[]>
+   */
+  public async getStateTopicChanges(
+    oldMessage: string | undefined,
+    newMessage: string,
+    deviceType: string = '',
+  ): Promise<ChangedCommandTopicInterface[]> {
+    const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
+    if (!isStateTopicChecked) {
+      return [];
+    }
+
+    const result: ChangedCommandTopicInterface[] = [];
+    const configTopics: MqttTopicInterface[] = await mqttRepository.getConfigTopics();
+
+    try {
+      const oldStateTopic = oldMessage ? JSON.parse(oldMessage) : {};
+      const newStateTopic = JSON.parse(newMessage);
+
+      for (const configTopic of configTopics) {
+        if (deviceType) {
+          if (configTopic.deviceType !== deviceType) {
+            continue;
+          }
+        }
+        for (const commandTopic of configTopic.commandTopics) {
+          for (const key of commandTopic.topicStateKeys || []) {
+            if (oldStateTopic[key] !== newStateTopic[key]) {
+              const item: ChangedCommandTopicInterface = Object.assign(commandTopic, {
+                deviceType: configTopic.deviceType,
+                mqttValueOld: oldStateTopic[key],
+                mqttValueNew: newStateTopic[key],
+              });
+              result.push(item);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      return [];
+    }
+
+    return result;
+  }
 }
+
+/**
+ * Changed MQTT Command Topic Interface.
+ */
+export interface ChangedCommandTopicInterface extends MqttCommandTopicInterface {
+  deviceType: string;
+  mqttValueOld: string | number;
+  mqttValueNew: string | number;
+}
+
+/**
+ * The "Topic => Timeout ID" Type.
+ */
+export type TopicTimeoutIds = {
+  [key: string]: ReturnType<typeof setTimeout>;
+};
 
 export default new TopicService();

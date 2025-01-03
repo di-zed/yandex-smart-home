@@ -8,6 +8,9 @@ import { UserInterface } from '../models/userModel';
 import mqttRepository from '../repositories/mqttRepository';
 import deviceService from './deviceService';
 
+/**
+ * MQTT Service.
+ */
 class MqttService {
   /**
    * Get Topic Names.

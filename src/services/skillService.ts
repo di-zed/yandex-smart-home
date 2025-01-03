@@ -7,16 +7,13 @@ import { UserInterface } from '../models/userModel';
 import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
 import { Property } from '../devices/property';
-import { MqttCommandTopicInterface, MqttTopicInterface } from '../interfaces/mqttInterface';
-import mqttRepository from '../repositories/mqttRepository';
 import userRepository from '../repositories/userRepository';
-import deviceHelper from '../helpers/deviceHelper';
 import configProvider from '../providers/configProvider';
 import httpProvider, { RequestOutput } from '../providers/httpProvider';
 import redisProvider from '../providers/redisProvider';
 import deviceService from './deviceService';
-import mqttService, { MqttOutputTopicNames, TopicData } from './mqttService';
-import topicService from './topicService';
+import mqttService, { TopicData } from './mqttService';
+import topicService, { ChangedCommandTopicInterface } from './topicService';
 
 /**
  * Skill Service.
@@ -68,11 +65,11 @@ class SkillService {
       return false;
     }
 
-    if (!(await this.isDeviceAvailable(user, device))) {
+    if (!(await deviceService.isDeviceAvailable(user, device))) {
       return false;
     }
 
-    const updatedDevice: Device = await deviceHelper.updateUserDevice(user, device);
+    const updatedDevice: Device = await deviceService.updateUserDevice(user, device);
     const tempTimeoutDevices: TempTimeoutDevices = await this.addTempUserDevice(user, updatedDevice);
 
     return new Promise<boolean>((resolve, reject): void => {
@@ -81,14 +78,14 @@ class SkillService {
       tempTimeoutDevices.timeoutId = setTimeout((): void => {
         if (tempTimeoutDevices.isDeviceParameterChanged) {
           this.callbackDiscovery(user.id)
-            .then((response: RequestOutput | boolean) => {
+            .then((response: RequestOutput | boolean): void => {
               if (typeof response === 'object' && response.status === 'ok') {
                 this.tempUserStateCallbacks[user.id] = true;
                 // The State Callback will be executed later
                 // via the Rest User controller (devices action) callback function.
                 return resolve(true);
               } else {
-                console.log('ERROR! Init Yandex Callbacks, parameter changed.', { response });
+                // console.log('ERROR! Init Yandex Callbacks, parameter changed.', { response });
                 return reject(response);
               }
             })
@@ -98,11 +95,11 @@ class SkillService {
         } else {
           this.tempUserStateCallbacks[user.id] = true;
           this.execTempUserStateCallback(user, Object.values(tempTimeoutDevices.payloadDevices))
-            .then((response: RequestOutput | boolean) => {
+            .then((response: RequestOutput | boolean): void => {
               if (typeof response === 'object' && response.status === 'ok') {
                 return resolve(true);
               } else {
-                console.log('ERROR! Init Yandex Callbacks, parameter NOT changed.', { response });
+                // console.log('ERROR! Init Yandex Callbacks, parameter NOT changed.', { response });
                 return reject(response);
               }
             })
@@ -276,57 +273,6 @@ class SkillService {
   }
 
   /**
-   * Get State Topic changes.
-   *
-   * @param oldMessage
-   * @param newMessage
-   * @param deviceType
-   * @returns Promise<ChangedCommandTopicInterface[]>
-   */
-  public async getStateTopicChanges(
-    oldMessage: string | undefined,
-    newMessage: string,
-    deviceType: string = '',
-  ): Promise<ChangedCommandTopicInterface[]> {
-    const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
-    if (!isStateTopicChecked) {
-      return [];
-    }
-
-    const result: ChangedCommandTopicInterface[] = [];
-    const configTopics: MqttTopicInterface[] = await mqttRepository.getConfigTopics();
-
-    try {
-      const oldStateTopic = oldMessage ? JSON.parse(oldMessage) : {};
-      const newStateTopic = JSON.parse(newMessage);
-
-      for (const configTopic of configTopics) {
-        if (deviceType) {
-          if (configTopic.deviceType !== deviceType) {
-            continue;
-          }
-        }
-        for (const commandTopic of configTopic.commandTopics) {
-          for (const key of commandTopic.topicStateKeys || []) {
-            if (oldStateTopic[key] !== newStateTopic[key]) {
-              const item: ChangedCommandTopicInterface = Object.assign(commandTopic, {
-                deviceType: configTopic.deviceType,
-                mqttValueOld: oldStateTopic[key],
-                mqttValueNew: newStateTopic[key],
-              });
-              result.push(item);
-            }
-          }
-        }
-      }
-    } catch (err) {
-      return [];
-    }
-
-    return result;
-  }
-
-  /**
    * Is Callback State Available?
    *
    * @param topicData
@@ -360,35 +306,8 @@ class SkillService {
    * @returns Promise<boolean>
    */
   public async isStateTopicChanged(oldMessage: string | undefined, newMessage: string, deviceType: string = ''): Promise<boolean> {
-    const changes: ChangedCommandTopicInterface[] = await this.getStateTopicChanges(oldMessage, newMessage, deviceType);
+    const changes: ChangedCommandTopicInterface[] = await topicService.getStateTopicChanges(oldMessage, newMessage, deviceType);
     return changes.length > 0;
-  }
-
-  /**
-   * Is Device Available?
-   *
-   * @param user
-   * @param device
-   * @returns Promise<boolean>
-   */
-  public async isDeviceAvailable(user: UserInterface, device: Device): Promise<boolean> {
-    let result: boolean = false;
-
-    const topicNames: MqttOutputTopicNames = await mqttService.getTopicNames({
-      user: user,
-      deviceId: device.id,
-    });
-
-    if (topicNames.availableTopic) {
-      result = (await topicService.getTopicMessage(topicNames.availableTopic)) !== 'offline';
-    }
-
-    const callbackIsSkillDeviceAvailable = configProvider.getConfigOption('callbackIsSkillDeviceAvailable');
-    if (typeof callbackIsSkillDeviceAvailable === 'function') {
-      result = await callbackIsSkillDeviceAvailable(user, device, topicNames, result);
-    }
-
-    return result;
   }
 
   /**
@@ -491,15 +410,6 @@ class SkillService {
   protected deleteTempUserDevices(user: UserInterface): void {
     delete this.tempUserDevices[user.id];
   }
-}
-
-/**
- * Changed MQTT Command Topic Interface.
- */
-export interface ChangedCommandTopicInterface extends MqttCommandTopicInterface {
-  deviceType: string;
-  mqttValueOld: string | number;
-  mqttValueNew: string | number;
 }
 
 /**

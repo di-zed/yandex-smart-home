@@ -190,10 +190,10 @@ export interface ConfigInterface {
   /**
    * Additional checks that the Skill Device can be sent to the Yandex server.
    *
-   * @see SkillService.isDeviceAvailable
+   * @see DeviceService.isDeviceAvailable
    * @example
    * yandexSmartHome(app, {
-   *   callbackIsSkillDeviceAvailable: async function (
+   *   callbackIsDeviceAvailable: async function (
    *      user: UserInterface,
    *      device: Device,
    *      topicNames: MqttOutputTopicNames,
@@ -201,7 +201,7 @@ export interface ConfigInterface {
    *   ): Promise<boolean> { ... },
    * });
    */
-  callbackIsSkillDeviceAvailable?: Function;
+  callbackIsDeviceAvailable?: Function;
 
   /**
    * Custom callback was called on success notification about the device state change.

@@ -1,5 +1,15 @@
 # CHANGE LOG
 
+## [1.6.0] - 2025-01-03
+
+### Added
+
+- Possibility to set "DEVICE_UNREACHABLE" status for offline devices.
+
+### Changed
+
+- Code refactoring.
+
 ## [1.5.5] - 2024-11-22
 
 ### Added

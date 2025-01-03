@@ -4,6 +4,7 @@
  */
 import { Router } from 'express';
 import RestIndexController from '../../controllers/rest/indexController';
+
 /**
  * REST Index Routes.
  */
