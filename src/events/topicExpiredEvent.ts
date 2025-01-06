@@ -7,7 +7,7 @@ import { RequestOutput } from '../providers/httpProvider';
 import { UserInterface } from '../models/userModel';
 import userRepository from '../repositories/userRepository';
 import deviceService from '../services/deviceService';
-import mqttService, { MqttOutputTopicNames, TopicData } from '../services/mqttService';
+import mqttService, { TopicData } from '../services/mqttService';
 import skillService from '../services/skillService';
 
 /**

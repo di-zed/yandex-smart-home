@@ -2,6 +2,7 @@
  * @author DiZed Team
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
+import i18n from 'i18n';
 import { Device } from '../devices/device';
 import { EventProperty } from '../devices/properties/eventProperty';
 import { UserInterface } from '../models/userModel';
@@ -71,6 +72,14 @@ class DeviceService {
    * @returns Device
    */
   public async updateUserDevice(user: UserInterface, device: Device, deleteWrongProperties: boolean = true): Promise<Device> {
+    if (!(await this.isDeviceAvailable(user, device))) {
+      return <Device>{
+        id: device.id,
+        error_code: 'DEVICE_UNREACHABLE',
+        error_message: i18n.__('The device "%s" is disconnected from power or the Internet.', device.id),
+      };
+    }
+
     const deviceClone: Device = JSON.parse(JSON.stringify(device));
     const isStateTopicChecked: boolean = (process.env.TOPIC_STATE_CHECK_IF_COMMAND_IS_UNDEFINED as string).trim() === '1';
 

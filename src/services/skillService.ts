@@ -65,10 +65,6 @@ class SkillService {
       return false;
     }
 
-    if (!(await deviceService.isDeviceAvailable(user, device))) {
-      return false;
-    }
-
     const updatedDevice: Device = await deviceService.updateUserDevice(user, device);
     const tempTimeoutDevices: TempTimeoutDevices = await this.addTempUserDevice(user, updatedDevice);
 
@@ -376,28 +372,31 @@ class SkillService {
    * @protected
    */
   protected getPayloadDevice(device: Device): Device {
-    const capabilities: Capability[] = [];
-    const properties: Property[] = [];
+    const result: Device = { id: device.id };
 
+    if (device.error_code) {
+      result.error_code = device.error_code;
+      result.error_message = device.error_message || '';
+      return result;
+    }
+
+    result.capabilities = [];
     for (const capability of device.capabilities || []) {
-      capabilities.push({
+      result.capabilities.push({
         type: capability.type,
         state: capability.state,
       });
     }
 
+    result.properties = [];
     for (const property of device.properties || []) {
-      properties.push({
+      result.properties.push({
         type: property.type,
         state: property.state,
       });
     }
 
-    return <Device>{
-      id: device.id,
-      capabilities: capabilities,
-      properties: properties,
-    };
+    return result;
   }
 
   /**

@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.6.1] - 2025-01-06
+
+### Fixed
+
+- Handling "DEVICE_UNREACHABLE" error logic.
+
 ## [1.6.0] - 2025-01-03
 
 ### Added

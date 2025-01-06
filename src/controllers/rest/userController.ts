@@ -128,9 +128,9 @@ export default class RestUserController {
 
       const updatedDevice: Device = await deviceService.updateUserDevice(req.currentUser, userDevice);
 
-      if (!(await deviceService.isDeviceAvailable(req.currentUser, userDevice))) {
-        payloadDevice.error_code = 'DEVICE_UNREACHABLE';
-        payloadDevice.error_message = res.__('The device "%s" is disconnected from power or the Internet.', payloadDevice.id);
+      if (updatedDevice.error_code) {
+        payloadDevice.error_code = updatedDevice.error_code;
+        payloadDevice.error_message = updatedDevice.error_message || '';
         continue;
       }
 
@@ -178,27 +178,35 @@ export default class RestUserController {
 
     for (const payloadDevice of <Device[]>response.payload.devices) {
       const userDevice: Device | undefined = await deviceService.getUserDeviceById(req.currentUser.id, payloadDevice.id);
-      if (userDevice === undefined || !(await deviceService.isDeviceAvailable(req.currentUser, userDevice))) {
+      if (userDevice === undefined) {
         continue;
       }
 
-      const payloadCapabilities: Capability[] = payloadDevice.capabilities || [];
       const updatedDevice: Device = await deviceService.updateUserDevice(req.currentUser, userDevice);
+      const payloadCapabilities: Capability[] = payloadDevice.capabilities || [];
 
       for (const payloadCapability of payloadCapabilities) {
+        let actionResult: CapabilityStateActionResult = {
+          status: 'ERROR',
+          error_code: 'INVALID_ACTION',
+          error_message: res.__('Capability "%s" for the device "%s" can not be changed.', payloadCapability.type, userDevice.id),
+        };
+
         const capabilityState: CapabilityState = <CapabilityState>payloadCapability.state;
+
+        if (updatedDevice.error_code) {
+          delete capabilityState.value;
+          actionResult.error_message = updatedDevice.error_message || actionResult.error_message;
+          capabilityState.action_result = actionResult;
+          continue;
+        }
+
         const topicNames: MqttOutputTopicNames = await mqttService.getTopicNames(<MqttInputTopicNames>{
           user: req.currentUser,
           deviceId: userDevice.id,
           capabilityType: payloadCapability.type,
           capabilityStateInstance: capabilityState.instance,
         });
-
-        let actionResult: CapabilityStateActionResult = {
-          status: 'ERROR',
-          error_code: 'INVALID_ACTION',
-          error_message: res.__('Capability "%s" for the device "%s" can not be changed.', payloadCapability.type, userDevice.id),
-        };
 
         try {
           if (topicNames.commandTopic) {
