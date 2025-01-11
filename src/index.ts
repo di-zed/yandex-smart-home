@@ -6,6 +6,7 @@ import express, { Application } from 'express';
 import expressRuid from 'express-ruid';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import mqtt from 'mqtt';
 import i18n from 'i18n';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -17,7 +18,6 @@ import topicService from './services/topicService';
 import skillService from './services/skillService';
 import Routes from './routes';
 import { ConfigInterface } from './interfaces/configInterface';
-import { ISubscriptionGrant } from 'mqtt/src/lib/client';
 
 /**
  * Bootstrap Class.
@@ -124,31 +124,39 @@ class YandexSmartHome {
    * @protected
    */
   protected subscribeMqtt(): void {
-    mqttProvider.connect().then((): void => {
-      mqttProvider
-        .subscribe((topic: string, newMessage: string): void => {
-          try {
-            topicService.getTopicMessage(topic).then((oldMessage: string | undefined): void => {
-              if (oldMessage !== newMessage) {
-                topicService.setTopicMessage(topic, newMessage).then((): void => {
-                  mqttProvider.listenTopic(topic, oldMessage, newMessage);
-                  skillService.initYandexCallbacks(topic, oldMessage, newMessage).catch((err): void => {
-                    console.log('ERROR! Init Yandex Callbacks.', { err, topic /*, oldMessage, newMessage*/ });
+    mqttProvider.getClientAsync().then((client: mqtt.MqttClient): void => {
+      client.subscribe('#', (err: Error | null): void => {
+        if (!err) {
+          console.log('MQTT is Subscribed!');
+
+          client.on('message', (topic: string, message: Buffer): void => {
+            try {
+              const newMessage: string = String(message);
+
+              topicService.getTopicMessage(topic).then((oldMessage: string | undefined): void => {
+                if (oldMessage !== newMessage) {
+                  topicService.setTopicMessage(topic, newMessage).then((): void => {
+                    mqttProvider.listenTopic(topic, oldMessage, newMessage);
+
+                    skillService.initYandexCallbacks(topic, oldMessage, newMessage).catch((err): void => {
+                      console.log('ERROR! Init Yandex Callbacks.', { err, topic /*, oldMessage, newMessage*/ });
+                    });
                   });
-                });
-              }
-            });
-          } catch (err) {
-            console.log('ERROR! MQTT Subscribe.', { err, topic, newMessage });
-          }
-        })
-        .then((subscriptionGrants: ISubscriptionGrant[]): void => {
+                }
+              });
+            } catch (err) {
+              console.log('ERROR! MQTT Message.', { err, topic, message });
+            }
+          });
+
           const callbackMqttIsSubscribed = configProvider.getConfigOption('callbackMqttIsSubscribed');
           if (typeof callbackMqttIsSubscribed === 'function') {
-            callbackMqttIsSubscribed(mqttProvider.getClient());
+            callbackMqttIsSubscribed(client);
           }
-          console.log('MQTT is Subscribed!', subscriptionGrants);
-        });
+        } else {
+          console.log('ERROR! MQTT Subscribe.', { err });
+        }
+      });
     });
   }
 }

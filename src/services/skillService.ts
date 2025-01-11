@@ -4,9 +4,7 @@
  */
 import { RedisClientType } from 'redis';
 import { UserInterface } from '../models/userModel';
-import { Capability } from '../devices/capability';
 import { Device } from '../devices/device';
-import { Property } from '../devices/property';
 import userRepository from '../repositories/userRepository';
 import configProvider from '../providers/configProvider';
 import httpProvider, { RequestOutput } from '../providers/httpProvider';

@@ -2,6 +2,11 @@ persistence true
 persistence_location /mosquitto/data
 
 log_dest file /mosquitto/log/mosquitto.log
+log_type error
+
+connection_messages true
+autosave_interval 1800
+max_keepalive 240
 
 allow_anonymous false
 password_file /etc/mosquitto/passwd

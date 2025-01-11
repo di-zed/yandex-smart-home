@@ -52,7 +52,11 @@ export class MqttProvider {
    * @see https://github.com/mqttjs/MQTT.js?tab=readme-ov-file#connect-async
    */
   public async connect(): Promise<mqtt.MqttClient> {
-    const options: { [key: string]: any } = {};
+    const options: { [key: string]: any } = {
+      keepalive: 120,
+      reconnectPeriod: 1000,
+      clean: true,
+    };
 
     const host: string = (process.env.MQTT_HOST as string).trim();
     const port: number = parseInt(process.env.MQTT_CONTAINER_PORT as string, 10);

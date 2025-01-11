@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.6.2] - 2025-01-11
+
+### Changed
+
+- MQTT connection configuration.
+
 ## [1.6.1] - 2025-01-06
 
 ### Fixed
