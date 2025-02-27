@@ -1,5 +1,12 @@
 # CHANGE LOG
 
+## [1.6.3] - 2025-02-27
+
+### Changed
+
+- Logic for "isDeviceAvailable" checking.
+- Status "DEVICE_NOT_FOUND -> DEVICE_UNREACHABLE" for not founded devices. 
+
 ## [1.6.2] - 2025-01-11
 
 ### Changed

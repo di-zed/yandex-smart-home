@@ -187,9 +187,15 @@ class DeviceService {
       deviceId: device.id,
     });
 
-    if (topicNames.availableTopic) {
-      result = (await topicService.getTopicMessage(topicNames.availableTopic)) === 'online';
-    }
+    // For now, it has been decided to abandon using availableTopic to check availability,
+    // since it can be updated differently on each device and be unpredictable.
+    // Instead, we can look at stateTopic. It is NOT a retained topic. Therefore, we can check if this topic exists,
+    // then this means that the device is online, if not, then it is not online.
+
+    // if (topicNames.availableTopic) {
+    //   result = (await topicService.getTopicMessage(topicNames.availableTopic)) === 'online';
+    // }
+
     if (!topicNames.stateTopic || !(await topicService.getTopicMessage(topicNames.stateTopic))) {
       result = false;
     }

@@ -10,6 +10,7 @@ import deviceService from '../../services/deviceService';
 import mqttService, { CommandTopicData, MqttInputTopicNames, MqttOutputTopicNames } from '../../services/mqttService';
 import topicService from '../../services/topicService';
 import deviceHelper from '../../helpers/deviceHelper';
+import restUserDevicesAfterEvent from '../../events/restUserDevicesAfterEvent';
 import { Device } from '../../devices/device';
 import { Capability, CapabilityState, CapabilityStateActionResult } from '../../devices/capability';
 import { Property } from '../../devices/property';
@@ -83,15 +84,9 @@ export default class RestUserController {
       response.payload.devices.push(updatedDevice);
     }
 
-    const callbackRestUserDevicesAction = configProvider.getConfigOption('callbackRestUserDevicesAction');
-    if (typeof callbackRestUserDevicesAction === 'function') {
-      // The callback must be executed after Yandex receives a response from the server.
-      setTimeout((): void => {
-        callbackRestUserDevicesAction(req.currentUser, updatedDevices).catch((err: any) => {
-          console.log('ERROR! Rest User Devices callback.', { err, user: req.currentUser, devices: updatedDevices });
-        });
-      }, 1000);
-    }
+    restUserDevicesAfterEvent.execute(req.currentUser, updatedDevices).catch((err): void => {
+      console.log('ERROR! REST User Devices After Event.', err instanceof Error ? err.message : err);
+    });
 
     return res.status(200).json(response);
   }
@@ -121,7 +116,7 @@ export default class RestUserController {
     for (const payloadDevice of <Device[]>response.payload.devices) {
       const userDevice: Device | undefined = await deviceService.getUserDeviceById(req.currentUser.id, payloadDevice.id);
       if (userDevice === undefined) {
-        payloadDevice.error_code = 'DEVICE_NOT_FOUND';
+        payloadDevice.error_code = 'DEVICE_UNREACHABLE'; // DEVICE_NOT_FOUND
         payloadDevice.error_message = res.__('The device "%s" can not be found.', payloadDevice.id);
         continue;
       }
@@ -130,7 +125,7 @@ export default class RestUserController {
 
       if (updatedDevice.error_code) {
         payloadDevice.error_code = updatedDevice.error_code;
-        payloadDevice.error_message = updatedDevice.error_message || '';
+        payloadDevice.error_message = updatedDevice.error_message || res.__('Something went wrong!');
         continue;
       }
 
