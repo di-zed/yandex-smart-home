@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.6.4] - 2025-03-10
+
+### Changed
+
+- Change error code from "INVALID_ACTION" to "DEVICE_UNREACHABLE" for the action of the device.
+
 ## [1.6.3] - 2025-02-27
 
 ### Changed

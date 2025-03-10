@@ -183,7 +183,7 @@ export default class RestUserController {
       for (const payloadCapability of payloadCapabilities) {
         let actionResult: CapabilityStateActionResult = {
           status: 'ERROR',
-          error_code: 'INVALID_ACTION',
+          error_code: 'DEVICE_UNREACHABLE', // INVALID_ACTION
           error_message: res.__('Capability "%s" for the device "%s" can not be changed.', payloadCapability.type, userDevice.id),
         };
 
