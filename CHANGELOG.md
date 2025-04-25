@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.6.6] - 2025-04-25
+
+### Fixed
+
+- package.json and package-lock.json.
+
 ## [1.6.5] - 2025-04-25
 
 ### Fixed
