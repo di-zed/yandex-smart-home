@@ -5,6 +5,7 @@
 import { RedisClientType } from 'redis';
 import { UserInterface } from '../models/userModel';
 import { Device } from '../devices/device';
+import topicAnonUserRegistry from '../registry/topicAnonUserRegistry';
 import userRepository from '../repositories/userRepository';
 import configProvider from '../providers/configProvider';
 import httpProvider, { RequestOutput } from '../providers/httpProvider';
@@ -52,11 +53,21 @@ class SkillService {
       return false;
     }
 
+    if (topicAnonUserRegistry.isUserAnonymous(topicData.userName)) {
+      return false;
+    }
     if (!(await this.isCallbackStateAvailable(topicData, oldMessage, newMessage))) {
       return false;
     }
 
-    const user: UserInterface = await userRepository.getUserByNameOrEmail(topicData.userName);
+    let user: UserInterface | undefined = undefined;
+
+    try {
+      user = await userRepository.getUserByNameOrEmail(topicData.userName);
+    } catch (err) {
+      topicAnonUserRegistry.markUserAsAnonymous(topicData.userName);
+      return false;
+    }
 
     const device: Device | undefined = await deviceService.getUserDeviceById(user.id, topicData.deviceId);
     if (device === undefined) {
@@ -73,13 +84,20 @@ class SkillService {
         if (tempTimeoutDevices.isDeviceParameterChanged) {
           this.callbackDiscovery(user.id)
             .then((response: RequestOutput | boolean): void => {
-              if (typeof response === 'object' && response.status === 'ok') {
-                this.tempUserStateCallbacks[user.id] = true;
-                // The State Callback will be executed later
-                // via the Rest User controller (devices action) callback function.
-                return resolve(true);
+              if (typeof response === 'object') {
+                if (response.status === 'ok') {
+                  this.tempUserStateCallbacks[user.id] = true;
+                  // The State Callback will be executed later
+                  // via the Rest User controller (devices action) callback function.
+                  return resolve(true);
+                } else {
+                  if (response.status === 'error' && response.error_code === 'UNKNOWN_USER') {
+                    topicAnonUserRegistry.markUserAsAnonymous(topicData.userName);
+                  }
+                  // console.log('ERROR! Init Yandex Callbacks, parameter changed.', { response });
+                  return reject(response);
+                }
               } else {
-                // console.log('ERROR! Init Yandex Callbacks, parameter changed.', { response });
                 return reject(response);
               }
             })
@@ -116,15 +134,22 @@ class SkillService {
     if (!this.tempUserStateCallbacks[user.id]) {
       return false;
     }
+    if (topicAnonUserRegistry.isUserAnonymous(user.email)) {
+      return false;
+    }
 
     try {
       const response: RequestOutput | boolean = await this.callbackState(user.id, devices);
 
-      if (typeof response === 'object' && response.status === 'ok') {
-        delete this.tempUserStateCallbacks[user.id];
+      if (typeof response === 'object') {
+        if (response.status === 'ok') {
+          delete this.tempUserStateCallbacks[user.id];
 
-        this.deleteTempUserDevices(user);
-        await this.logLatestSkillUpdate(user.email, devices);
+          this.deleteTempUserDevices(user);
+          await this.logLatestSkillUpdate(user.email, devices);
+        } else if (response.status === 'error' && response.error_code === 'UNKNOWN_USER') {
+          topicAnonUserRegistry.markUserAsAnonymous(user.email);
+        }
       }
 
       return response;

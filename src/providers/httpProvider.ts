@@ -34,14 +34,14 @@ class HttpProvider {
         typeof options.headers === 'object' ? options.headers : {},
       );
 
-      const postData: string = JSON.stringify(data);
+      const body: string = JSON.stringify(data);
 
-      if (String(options.method).toLowerCase() === 'post') {
-        options.headers['Content-Length'] = postData.length;
+      if (['post', 'put', 'delete'].includes(String(options.method).toLowerCase())) {
+        options.headers['Content-Length'] = body.length;
       } else if (String(options.method).toLowerCase() === 'get') {
         const urlParams: any[] = [];
         for (const key in data) {
-          urlParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`);
+          urlParams.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(data[key]))}`);
         }
         if (urlParams.length > 0) {
           url += '?' + urlParams.join('&');
@@ -53,18 +53,21 @@ class HttpProvider {
       const request: ClientRequest = library.request(url, options, (response: IncomingMessage): void => {
         let result: RequestOutput | undefined = undefined;
 
+        let data: string = '';
         response.on('data', (chunk): void => {
-          try {
-            result = JSON.parse(chunk.toString()) || undefined;
-          } catch (err) {
-            return reject('Error while parsing data!');
-          }
+          data += String(chunk);
         });
 
         response.on('end', () => {
-          if (result !== undefined) {
-            return resolve(result);
+          try {
+            result = JSON.parse(data) || undefined;
+            if (result !== undefined) {
+              return resolve(result);
+            }
+          } catch (err) {
+            return reject('Error while parsing data!');
           }
+
           return reject('Something went wrong!');
         });
       });
@@ -73,8 +76,8 @@ class HttpProvider {
         return reject(error);
       });
 
-      if (String(options.method).toLowerCase() === 'post') {
-        request.write(postData);
+      if (['post', 'put', 'delete'].includes(String(options.method).toLowerCase())) {
+        request.write(body);
       }
       request.end();
     });
@@ -94,6 +97,19 @@ class HttpProvider {
   }
 
   /**
+   * Make a PUT Request.
+   *
+   * @param url
+   * @param data
+   * @param options
+   * @returns Promise<RequestOutput>
+   */
+  public async put(url: string, data: RequestInput, options: RequestOptions = {}): Promise<RequestOutput> {
+    options = Object.assign(options, { method: 'PUT' });
+    return await this.request(url, data, options);
+  }
+
+  /**
    * Make a GET Request.
    *
    * @param url
@@ -105,20 +121,29 @@ class HttpProvider {
     options = Object.assign(options, { method: 'GET' });
     return await this.request(url, data, options);
   }
+
+  /**
+   * Make a DELETE Request.
+   *
+   * @param url
+   * @param data
+   * @param options
+   * @returns Promise<RequestOutput>
+   */
+  public async delete(url: string, data: RequestInput, options: RequestOptions = {}): Promise<RequestOutput> {
+    options = Object.assign(options, { method: 'DELETE' });
+    return await this.request(url, data, options);
+  }
 }
 
 /**
  * Request Input Type.
  */
-export type RequestInput = {
-  [key: string]: any;
-};
+export type RequestInput = Record<string, unknown>;
 
 /**
  * Request Output Type.
  */
-export type RequestOutput = {
-  [key: string]: any;
-};
+export type RequestOutput = Record<string, unknown>;
 
 export default new HttpProvider();

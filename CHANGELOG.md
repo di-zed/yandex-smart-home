@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.6.5] - 2025-04-25
+
+### Fixed
+
+- Frequent server requests for anonymous users (if the user has already been checked and has not been found within the last five minutes, we will not check again to avoid spam).
+
 ## [1.6.4] - 2025-03-10
 
 ### Changed

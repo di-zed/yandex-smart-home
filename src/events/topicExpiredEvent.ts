@@ -5,6 +5,7 @@
 import { Device } from '../devices/device';
 import { RequestOutput } from '../providers/httpProvider';
 import { UserInterface } from '../models/userModel';
+import topicAnonUserRegistry from '../registry/topicAnonUserRegistry';
 import userRepository from '../repositories/userRepository';
 import deviceService from '../services/deviceService';
 import mqttService, { TopicData } from '../services/mqttService';
@@ -27,18 +28,36 @@ class TopicExpiredEvent {
       return false;
     }
 
-    try {
-      const user: UserInterface = await userRepository.getUserByNameOrEmail(topicData.userName);
+    if (topicAnonUserRegistry.isUserAnonymous(topicData.userName)) {
+      return false;
+    }
 
+    let user: UserInterface | undefined = undefined;
+
+    try {
+      user = await userRepository.getUserByNameOrEmail(topicData.userName);
+    } catch (err) {
+      topicAnonUserRegistry.markUserAsAnonymous(topicData.userName);
+      return false;
+    }
+
+    try {
       const device: Device | undefined = await deviceService.getUserDeviceById(user.id, topicData.deviceId);
       if (device === undefined) {
         return false;
       }
 
       const updatedDevice: Device = await deviceService.updateUserDevice(user, device);
-
       const response: RequestOutput | boolean = await skillService.callbackState(user.id, [updatedDevice]);
-      if (typeof response !== 'object' || response.status !== 'ok') {
+
+      if (typeof response === 'object') {
+        if (response.status !== 'ok') {
+          if (response.status === 'error' && response.error_code === 'UNKNOWN_USER') {
+            topicAnonUserRegistry.markUserAsAnonymous(topicData.userName);
+          }
+          return false;
+        }
+      } else {
         return false;
       }
     } catch (err) {
