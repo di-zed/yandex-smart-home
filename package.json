@@ -1,6 +1,6 @@
 {
   "name": "@di-zed/yandex-smart-home",
-  "version": "1.6.7",
+  "version": "1.6.8",
   "description": "The Yandex Smart Home skills for the different device types.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
