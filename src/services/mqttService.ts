@@ -137,6 +137,7 @@ class MqttService {
               capabilityStateInstance: commandTopic.capability?.stateInstance ? commandTopic.capability.stateInstance : '',
               propertyType: commandTopic.property?.type ? commandTopic.property.type : '',
               propertyStateInstance: commandTopic.property?.stateInstance ? commandTopic.property.stateInstance : '',
+              topicConfigKey: commandTopic.topicConfigKey || '',
               topicStateKeys: commandTopic.topicStateKeys || [],
               messageValueMapping: commandTopic.messageValueMapping || {},
               userName: parsedTopicName.userName,
@@ -315,6 +316,7 @@ export type CommandTopicData = ParsedTopicName & {
   capabilityStateInstance: string;
   propertyType: string;
   propertyStateInstance: string;
+  topicConfigKey: string;
   topicStateKeys: string[];
   messageValueMapping: { [key: string]: any };
 };

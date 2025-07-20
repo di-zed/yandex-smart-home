@@ -4,7 +4,7 @@
     {
       "deviceType": "devices.types.thermostat",
       "stateTopic": "<user_name>/climate/<device_id>/state",
-      "configTopic": "<user_name>/climate/<device_id>/config",
+      "configTopic": "<user_name>/homeassistant/climate/<device_id>/config",
       "availableTopic": "<user_name>/climate/<device_id>/available",
       "commandTopics": [
         {
@@ -33,6 +33,7 @@
             "stateInstance": "thermostat"
           },
           "topic": "<user_name>/climate/<device_id>/thermostat/set",
+          "topicConfigKey": "modes",
           "topicStateKeys": ["mode"],
           "messageValueMapping": {
             "off": "auto"

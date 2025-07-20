@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## [1.6.7] - 2025-07-21
+
+### Added
+
+- Skip the wrong capability mode options if needed.
+
 ## [1.6.6] - 2025-04-25
 
 ### Fixed

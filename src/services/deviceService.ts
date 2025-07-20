@@ -3,6 +3,7 @@
  * @copyright Copyright (c) DiZed Team (https://github.com/di-zed/)
  */
 import i18n from 'i18n';
+import { ModeCapabilityParameters, ModeCapabilityParametersMode } from '../devices/capabilities/modeCapability';
 import { Device } from '../devices/device';
 import { EventProperty } from '../devices/properties/eventProperty';
 import { UserInterface } from '../models/userModel';
@@ -68,10 +69,16 @@ class DeviceService {
    *
    * @param user
    * @param device
+   * @param deleteWrongCapabilities
    * @param deleteWrongProperties
    * @returns Device
    */
-  public async updateUserDevice(user: UserInterface, device: Device, deleteWrongProperties: boolean = true): Promise<Device> {
+  public async updateUserDevice(
+    user: UserInterface,
+    device: Device,
+    deleteWrongCapabilities: boolean = true,
+    deleteWrongProperties: boolean = true,
+  ): Promise<Device> {
     if (!(await this.isDeviceAvailable(user, device))) {
       return <Device>{
         id: device.id,
@@ -110,6 +117,42 @@ class DeviceService {
 
       if (capabilityMessage !== undefined) {
         capability.state!.value = await topicService.convertMqttMessageToAliceValue(capabilityMessage, capabilityTopicData);
+      }
+
+      /**
+       * Skip the wrong capability mode options if needed.
+       */
+
+      if (deleteWrongCapabilities && capabilityTopicData?.topicConfigKey) {
+        if (capability.type === 'devices.capabilities.mode' && capability.parameters) {
+          const capabilityParameters: ModeCapabilityParameters = capability.parameters as ModeCapabilityParameters;
+          const handledParameterModes: ModeCapabilityParametersMode[] = [];
+
+          const topicConfigKeys: string[] = [];
+          const configTopicMessage: string | undefined = await topicService.getTopicMessage(capabilityTopicNames.configTopic);
+
+          if (configTopicMessage !== undefined) {
+            try {
+              const configTopicValue: { [key: string]: any } = JSON.parse(configTopicMessage) as { [key: string]: any };
+
+              if (configTopicValue && Array.isArray(configTopicValue[capabilityTopicData?.topicConfigKey])) {
+                for (const option of configTopicValue[capabilityTopicData?.topicConfigKey]) {
+                  topicConfigKeys.push(await topicService.convertMqttMessageToAliceValue(option, capabilityTopicData));
+                }
+              }
+            } catch (err) {
+              // do nothing
+            }
+          }
+
+          for (const parameterMode of capabilityParameters.modes) {
+            if (topicConfigKeys.includes(parameterMode.value)) {
+              handledParameterModes.push({ value: parameterMode.value });
+            }
+          }
+
+          capabilityParameters.modes = handledParameterModes;
+        }
       }
     }
 

@@ -71,6 +71,11 @@ export interface MqttCommandTopicInterface {
   topic: string;
 
   /**
+   * Name of key for the scope of values in the Config topic.
+   */
+  topicConfigKey?: string;
+
+  /**
    * Name of keys for the same value in the State topic.
    */
   topicStateKeys?: string[];
